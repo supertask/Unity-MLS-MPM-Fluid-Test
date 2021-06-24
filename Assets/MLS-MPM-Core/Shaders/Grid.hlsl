@@ -37,8 +37,9 @@ inline float DevN(float x)
 
 inline float3x3 InvD()
 {
+	//return 4.0f * Identity3x3;
 	//return 4.0f * Identity3x3 * _GridSpacingH * _GridSpacingH; // by Yuan 
-	return 4.0f * (1 / _GridSpacingH) * (1 / _GridSpacingH) * Identity3x3; // by Yuan 
+	return 4.0f * (1 / _GridSpacingH) * (1 / _GridSpacingH) * Identity3x3; // by Tasuku
 
 	//float3x3 apicD = (1 / 4.0f) * _GridSpacingH * _GridSpacingH * Identity3x3;
 	//return inverse(apicD);
@@ -93,6 +94,7 @@ inline float GetWeight(float3 pos, int3 delta)
 
 	float3 gpos = CellIndex3DToPositionWS(gindex);
 	float3 dis = pos - gpos;
+
 	float3 invH = 1.0f / _GridSpacingH;
 	dis *= invH;
 
