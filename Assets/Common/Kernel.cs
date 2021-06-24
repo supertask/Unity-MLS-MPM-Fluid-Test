@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace ComputeShaderUtil {
 
@@ -16,6 +17,7 @@ namespace ComputeShaderUtil {
 
 		public Kernel(ComputeShader shader, string key)
 		{
+            Assert.AreNotEqual(shader, null);
 			index = shader.FindKernel(key);
 			if (index < 0)
 			{

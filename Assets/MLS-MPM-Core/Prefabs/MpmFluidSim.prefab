@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3423425001010626360
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3423425001010626361}
+  - component: {fileID: 1217799961580971129}
+  - component: {fileID: 522039639}
+  - component: {fileID: 522039640}
+  m_Layer: 0
+  m_Name: MpmFluidSim
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3423425001010626361
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423425001010626360}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1217799961580971129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423425001010626360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63c751b0ae7293f488912aa07dde296a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  particlesManagerCS: {fileID: 7200000, guid: c8e12ab375ba01a4cbb8a95e7904e469, type: 3}
+  initGridCS: {fileID: 7200000, guid: 51d655339f61f234c905961723cb6be0, type: 3}
+  particlesToGridCS: {fileID: 7200000, guid: 50d8eb457faadcc4194cdee8de727d08, type: 3}
+  updateGridCS: {fileID: 7200000, guid: bdc1eb0633820bb47ad1749a9a75d507, type: 3}
+  gridToParticlesCS: {fileID: 7200000, guid: f58c60ada5c7acb43b35ec1862e32d51, type: 3}
+  gridSpacingH: 1
+  gridWidth: 64
+  gridHeight: 64
+  gridDepth: 64
+  youngsModulusE: 400
+  poissonRatioNu: 0.2
+  hyperElasticHardening: 10
+  sphereRadius: 5
+--- !u!114 &522039639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423425001010626360}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5494be0a10a74c4f9d2460dd347f77c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: a7b9279c26e940444879ced8d661f091, type: 2}
+  debugObjectSize: 0.15
+--- !u!114 &522039640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423425001010626360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f0106432343f12409caed329d212e57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: cde953ec2f9988d4c95227fe8312406f, type: 2}
+  particleSize: 0.12

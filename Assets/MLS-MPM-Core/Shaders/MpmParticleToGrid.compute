@@ -1,0 +1,110 @@
+﻿#pragma kernel ParticleToGrid
+
+//Assets/MLS-MPM-Core/Shaders
+#include "MpmStruct.hlsl"
+#include "./Constant.hlsl"
+#include "./Grid.hlsl"
+#include "./SVD.hlsl"
+
+#define THREAD_1D 256
+
+float _DeltaTime;
+int _NumOfParticles;
+
+// Parameters of hyper elastic material.
+float _HyperElasticHardening;
+float _HyperElasticMu;
+float _HyperElasticLambda;
+
+RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
+RWStructuredBuffer<MpmCell> _GridBuffer;
+
+[numthreads(THREAD_1D,1,1)]
+void ParticleToGrid (uint3 DTid : SV_DispatchThreadID)
+{
+    const uint CellID = DTid.x;
+	MpmCell c = _GridBuffer[CellID];
+
+	[loop]
+	for (int pi = 0; pi < _NumOfParticles; ++pi)
+	{
+        MpmParticle particle = _ParticlesBufferRead[pi];
+		if (particle.type == TYPE__INACTIVE) continue;
+
+        int3 gidx = ParticlePositionToCellIndex3D(particle.position);
+        for (int gx = -1; gx <= 1; ++gx)
+        {
+            for (int gy = -1; gy <= 1; ++gy)
+			{
+				for(int gz = -1; gz <=1; ++gz)
+				{
+					int3 delta = int3(gx,gy,gz);
+					int3 cid = gidx + delta;
+
+					uint idx = CellIndex3DTo1D(cid);
+					if(CellID != idx) continue;
+
+					if (InGrid(cid))
+					{
+						float3 gridPosition = CellIndex3DToPositionWS(cid);
+						float weight = GetWeight(particle.position, delta);
+
+						float3x3 F = particle.Fe;
+						float3x3 R = 0;
+						float3x3 U ;
+						float3 d;
+						float3x3 V;
+
+						float volume = particle.volume;
+						float3x3 Dinv = InvD();
+						
+						GetSVD3D(F, U, d, V);
+						R = mul(U, transpose(V));
+
+						float e = 1;
+						float mu = _HyperElasticMu;
+						float lambda = _HyperElasticLambda;
+
+
+						float j = determinant(F);
+						//if(particle.type == 2)
+						//{
+							e = exp(_HyperElasticHardening * (1 - particle.Jp));
+						//}
+						// else
+						// if(particle.type == 3)
+						// {
+						// 	mu = 0;
+						// 	j = particle.Jp;
+						// }
+
+						float mup = mu * e;
+						float lambdap = lambda * e;
+
+
+						float3x3 P = mul((2 * mup * (F - R)), transpose(F)) + lambdap * (j - 1) * j ;
+
+						//if(particle.type == 3)
+						//{
+						//	float s = particle.Jp -1;
+						//	P = float3x3(s,0,0,0,s,0,0,0,s) * mu * 10;
+						//}
+						float3x3 stress = -(_DeltaTime * volume) * mul(Dinv , P);
+						float3x3 apic = stress + particle.mass * particle.C;
+
+						// j = clamp(j, 0.6f,20.0f);
+						// float3x3 FinvT = transpose(inverse(F));
+						// float3x3 P = (2.0f * mup * (F - R)) + lambdap * (j - 1.0f) * j * FinvT;
+						// float3x3 stress = 1.0f / j * mul(P, transpose(F));
+
+						c.mass += weight * particle.mass;
+						c.mass_x_velocity += weight * (particle.mass * particle.velocity
+							+ mul(apic, (gridPosition - particle.position)));
+					}
+				}
+			}
+		}
+	}
+	_GridBuffer[CellID] = c;
+
+}

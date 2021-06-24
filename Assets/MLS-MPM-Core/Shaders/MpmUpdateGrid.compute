@@ -1,0 +1,41 @@
+﻿#pragma kernel UpdateGrid
+
+#include "./MpmStruct.hlsl"
+#include "./Constant.hlsl"
+#include "./Grid.hlsl"
+#include "./SVD.hlsl"
+
+#define THREAD_1D 256
+
+float _DeltaTime;
+
+RWStructuredBuffer<MpmCell> _GridBuffer;
+
+[numthreads(THREAD_1D,1,1)]
+void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
+{
+	const uint cid = DTid.x;
+    MpmCell cell = _GridBuffer[cid];
+
+	uint3 cidx = CellIndex1DTo3D(cid);
+
+    if (cell.mass <= 0)
+    {
+		cell.force = 0;
+        cell.mass = 0;
+        cell.mass_x_velocity = 0;
+        cell.velocity = 0;
+    }
+    else
+    {
+        cell.velocity = cell.mass_x_velocity / cell.mass;
+
+        float3 g = float3(0.0f,-9.8f, 0.0f);
+        cell.velocity += _DeltaTime * (cell.force / cell.mass + g);
+        if (cidx.x < 2 || cidx.x >= _GridResolutionWidth - 2) cell.velocity.x = 0;
+        if (cidx.y < 2 || cidx.y >= _GridResolutionHeight - 2) cell.velocity.y = 0;
+        if (cidx.z < 2 || cidx.z >= _GridResolutionDepth - 2) cell.velocity.z = 0;
+    }
+
+    _GridBuffer[cid] = cell;
+}

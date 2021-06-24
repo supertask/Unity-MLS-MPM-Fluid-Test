@@ -1,0 +1,85 @@
+﻿#pragma kernel GridToParticle
+
+#include "MpmStruct.hlsl"
+#include "./Constant.hlsl"
+#include "./Grid.hlsl"
+#include "./SVD.hlsl"
+
+#define THREAD_1D 256
+
+float _DeltaTime;
+
+RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
+RWStructuredBuffer<MpmCell> _GridBuffer;
+
+[numthreads(THREAD_1D, 1, 1)]
+void GridToParticle(uint3 DTid : SV_DispatchThreadID)
+{
+	const uint pid = DTid.x;
+	MpmParticle particle = _ParticlesBufferRead[pid];
+	if(!particle.type) return;
+	
+    particle.velocity = 0;
+    particle.C = 0;
+	float _GridSpacingInvH = 1.0f/_GridSpacingH;
+
+	int3 gidx = ParticlePositionToCellIndex3D(particle.position);
+	for (int gx = -1; gx <= 1; ++gx)
+	{
+		for (int gy = -1; gy <= 1; ++gy)
+		{
+			for(int gz = -1; gz <=1; ++gz)
+			{
+				int3 delta = int3(gx,gy,gz);
+				int3 cid = gidx + delta;
+				int idx = CellIndex3DTo1D(cid);
+				if (InGrid(cid))
+				{
+					float3 gpos = CellIndex3DToPositionWS(cid);
+					float weight = GetWeight(particle.position, delta);
+					float3 velocity = _GridBuffer[idx].velocity;
+
+					particle.velocity += weight * velocity;
+					particle.C += 4 * _GridSpacingInvH * Math_OuterProduct(weight * velocity, gpos-particle.position); // by Yuan
+				}
+			}
+		}
+	}
+
+    particle.position += _DeltaTime * particle.velocity;
+    particle.position = clamp(particle.position,
+		_CellStartPos,
+		float3(_GridResolutionWidth,_GridResolutionHeight,_GridResolutionDepth) * _GridSpacingH - _CellStartPos
+		);
+
+    float3x3 F = particle.Fe;
+    F = mul(Identity3x3 + _DeltaTime * particle.C, F);
+
+	//if(particle.type == 2)
+	//{
+		float3x3 U ;
+		float3 d;
+		float3x3 V;
+
+		GetSVD3D(F, U, d, V);
+
+		float dl = 1.0f - 2.5e-2f;
+		float du = 1.0f + 4.5e-3f;
+		d = clamp(d, float3(dl,dl,dl), float3(du,du,du));
+		float3x3 D = float3x3(d[0], 0, 0, 0, d[1], 0, 0, 0, d[2]);
+		
+		float oldj = determinant(F);
+		F = mul(mul(U, D),transpose(V));
+
+		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.6f, 10.0f);
+	//}
+	//else if(particle.type == 3)
+	//{
+	//	particle.Jp *= 1 + _DeltaTime * (particle.C[0][0] + particle.C[1][1]);
+	//}
+
+	particle.Fe = F;
+
+	_ParticlesBufferRead[pid] = particle;
+
+}

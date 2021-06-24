@@ -1,0 +1,84 @@
+﻿#pragma kernel InitParticles
+#pragma kernel EmitParticles
+
+#include "./MpmStruct.hlsl"
+#include "./Constant.hlsl"
+#include "./Grid.hlsl"
+#include "./SVD.hlsl"
+
+#define THREAD_1D 256
+#define EMIT_PARTICLE_THREAD_1D 8
+
+#define SEED PI
+
+int _ParticleType;
+float _SphereRadius;
+
+RWStructuredBuffer<MpmParticle> _ParticlesBuffer;
+
+AppendStructuredBuffer<uint> _WaitingParticleIndexesBuffer;
+ConsumeStructuredBuffer<uint> _PoolParticleIndexesBuffer;
+
+float gold_noise(float2 coordinate, float seed) {
+	return frac(tan(
+		distance(coordinate * (seed + GOLDEN_RATIO), float2(GOLDEN_RATIO, PI))
+	) * SQ2);
+}
+
+float3 randomPosOnSphere(int index)
+{
+	// generating uniform points on the sphere: http://corysimon.github.io/articles/uniformdistn-on-sphere/
+	float fi = float(index);
+	// Note: Use uniform random generator instead of noise in your applications
+	float theta = 2.0f * PI * gold_noise(float2(fi * 0.3482f, fi * 2.18622f), SEED);
+	float phi = acos(1.0f - 2.0f * gold_noise(float2(fi * 1.9013, fi * 0.94312), SEED));
+	float x = sin(phi) * cos(theta);
+	float y = sin(phi) * sin(theta);
+	float z = cos(phi);
+
+	return float3(x, y, z);
+}
+
+inline float random(float2 _st) {
+	return frac(sin(dot(_st.xy,
+		float2(12.9898, 78.233))) *
+		43758.5453123);
+}
+
+inline float3 random3D(float2 p) {
+	return 2.0 * (float3(random(p * 1), random(p * 2), random(p * 3)) - 0.5);
+}
+
+//すべてのパーティクルを初期化
+[numthreads(THREAD_1D, 1, 1)]
+void InitParticles(uint3 DTid : SV_DispatchThreadID)
+{
+	uint idx = DTid.x;
+
+	_ParticlesBuffer[idx].position = float3(0, 0, 0);
+	_ParticlesBuffer[idx].type = TYPE__INACTIVE;
+
+	_WaitingParticleIndexesBuffer.Append(idx);
+}
+
+//表示させる（emitさせる）パーティクルを初期化
+[numthreads(EMIT_PARTICLE_THREAD_1D, 1, 1)]
+void EmitParticles(uint3 DTid : SV_DispatchThreadID)
+{
+	uint idx = _PoolParticleIndexesBuffer.Consume();
+	uint newpid = DTid.x;
+
+	MpmParticle particle = _ParticlesBuffer[idx];
+	particle.type = _ParticleType;
+	particle.mass = 1;
+	particle.volume = 1;
+	//particle.position = float3(0, 0, 0); //randomの値を入れる
+	particle.position = _SphereRadius * randomPosOnSphere(idx); //randomの値を入れる
+	//particle.position = random3D(float2(idx, 0)); //randomの値を入れる
+	particle.velocity = float3(0, 0, 0);
+	particle.C = 0;
+	particle.Fe = Identity3x3;
+	particle.Jp = 1;
+
+	_ParticlesBuffer[idx] = particle;
+}
