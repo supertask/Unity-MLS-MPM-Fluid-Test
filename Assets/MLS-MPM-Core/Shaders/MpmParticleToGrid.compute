@@ -56,7 +56,7 @@ void ParticleToGrid (uint3 DTid : SV_DispatchThreadID)
 						float3x3 V;
 
 						float volume = particle.volume;
-						float3x3 Dinv = InvD();
+						float3x3 Dinv = InvApicD();
 						
 						GetSVD3D(F, U, d, V);
 						R = mul(U, transpose(V));

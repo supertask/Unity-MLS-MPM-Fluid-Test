@@ -35,18 +35,22 @@ inline float DevN(float x)
     return 0;
 }
 
-inline float3x3 InvD()
+// Inverse D matrix of APIC fluid
+inline float3x3 InvApicD()
 {
-	//return 4.0f * Identity3x3;
-	//return 4.0f * Identity3x3 * _GridSpacingH * _GridSpacingH; // by Yuan 
-	return 4.0f * (1 / _GridSpacingH) * (1 / _GridSpacingH) * Identity3x3; // by Tasuku
-
 	//float3x3 apicD = (1 / 4.0f) * _GridSpacingH * _GridSpacingH * Identity3x3;
 	//return inverse(apicD);
+
+	// Same meaning with equation above
+	float invH = 1 / _GridSpacingH;
+	return 4.0f * invH * invH * Identity3x3; // identiy matrix 3x3
 }
+
+// 動かない原因はここっぽい
 inline uint3 ParticlePositionToCellIndex3D(float3 pos)
 {
-	return uint3(pos-_CellStartPos);
+	// return uint3(pos-_CellStartPos); // by Yuan
+	 return uint3( (pos-_CellStartPos) / _GridSpacingH ); // by Yuan
 }
 
 inline uint CellIndex3DTo1D(uint3 idx)
@@ -62,11 +66,14 @@ inline uint3 CellIndex1DTo3D(uint idx)
 	return uint3(xy%_GridResolutionWidth, xy/_GridResolutionWidth, z);
 }
 
+
+// 動かない原因はここっぽい
 inline float3 CellIndex3DToPositionWS(uint3 idx)
 {
-	//return _CellStartPos + (idx + 0.5f) * _GridSpacingH; //by Yuan
+	//return _CellStartPos + (idx + 0.5f) * ; //by Yuan
 	float halfH = _GridSpacingH / 2;
 	return _CellStartPos + (idx + halfH) * _GridSpacingH;
+	//return _CellStartPos + (idx + 0.5);
 }
 
 inline bool InGrid(uint3 idx)

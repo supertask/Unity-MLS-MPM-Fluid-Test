@@ -50,7 +50,7 @@ MonoBehaviour:
   particlesToGridCS: {fileID: 7200000, guid: 50d8eb457faadcc4194cdee8de727d08, type: 3}
   updateGridCS: {fileID: 7200000, guid: bdc1eb0633820bb47ad1749a9a75d507, type: 3}
   gridToParticlesCS: {fileID: 7200000, guid: f58c60ada5c7acb43b35ec1862e32d51, type: 3}
-  gridSpacingH: 1
+  gridSpacingH: 0.8
   gridWidth: 64
   gridHeight: 64
   gridDepth: 64
