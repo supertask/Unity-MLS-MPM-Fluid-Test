@@ -1,5 +1,6 @@
 ﻿#pragma kernel InitParticles
 #pragma kernel EmitParticles
+#pragma kernel CopyParticles
 
 #include "./MpmStruct.hlsl"
 #include "./Constant.hlsl"
@@ -16,8 +17,13 @@ float _SphereRadius;
 
 RWStructuredBuffer<MpmParticle> _ParticlesBuffer;
 
+// For emitting particles
 AppendStructuredBuffer<uint> _WaitingParticleIndexesBuffer;
 ConsumeStructuredBuffer<uint> _PoolParticleIndexesBuffer;
+
+// For copying particles
+StructuredBuffer<MpmParticle> _ParticlesBufferRead;
+RWStructuredBuffer<MpmParticle> _ParticlesBufferWrite;
 
 float gold_noise(float2 coordinate, float seed) {
 	return frac(tan(
@@ -81,4 +87,10 @@ void EmitParticles(uint3 DTid : SV_DispatchThreadID)
 	particle.Jp = 1;
 
 	_ParticlesBuffer[idx] = particle;
+}
+
+[numthreads(THREAD_1D, 1, 1)]
+void CopyParticles(uint3 DTid : SV_DispatchThreadID)
+{
+	_ParticlesBufferWrite[DTid.x] = _ParticlesBufferRead[DTid.x];
 }

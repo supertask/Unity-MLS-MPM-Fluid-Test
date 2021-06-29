@@ -10,7 +10,7 @@ namespace UnityMPM
     {
         [SerializeField] public Material material;
         [SerializeField] public float particleSize = 0.03f;
-        GpuMpmParticleSystem mpmParticles;
+        GpuMpmParticleSystem mpmParticleSystem;
         public static class ShaderID
         {
             public static int ParticleSize = Shader.PropertyToID("_ParticleSize");
@@ -19,7 +19,7 @@ namespace UnityMPM
 
         void Start()
         {
-            this.mpmParticles = this.GetComponent<GpuMpmParticleSystem>();
+            this.mpmParticleSystem = this.GetComponent<GpuMpmParticleSystem>();
         }
 
 
@@ -40,7 +40,7 @@ namespace UnityMPM
             }
             this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
             this.material.SetFloat(ShaderID.ParticleSize, this.particleSize);
-            this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.ParticlesBuffer, this.mpmParticles.ParticlesBuffer);
+            this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.ParticlesBuffer, this.mpmParticleSystem.ParticlesBuffer);
             this.material.SetPass(0);
 
             /*
@@ -48,9 +48,9 @@ namespace UnityMPM
                 this.material,
                 new Bounds(Vector3.zero, Vector3.one * 100f),
                 MeshTopology.Points,
-                this.mpmParticles.MaxNumOfParticles);
+                this.mpmParticleSystem.MaxNumOfParticles);
             */
-            Graphics.DrawProceduralNow(MeshTopology.Points, this.mpmParticles.MaxNumOfParticles);
+            Graphics.DrawProceduralNow(MeshTopology.Points, this.mpmParticleSystem.MaxNumOfParticles);
         }
     }
 }

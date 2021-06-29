@@ -1,4 +1,4 @@
-﻿#pragma kernel ParticleToGrid
+﻿#pragma kernel ParticleToGridGathering
 
 //Assets/MLS-MPM-Core/Shaders
 #include "MpmStruct.hlsl"
@@ -20,10 +20,10 @@ RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
 RWStructuredBuffer<MpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
-void ParticleToGrid (uint3 DTid : SV_DispatchThreadID)
+void ParticleToGridGathering(uint3 DTid : SV_DispatchThreadID)
 {
     const uint CellID = DTid.x;
-	MpmCell c = _GridBuffer[CellID];
+	MpmCell cell = _GridBuffer[CellID];
 
 	[loop]
 	for (int pi = 0; pi < _NumOfParticles; ++pi)
@@ -97,14 +97,14 @@ void ParticleToGrid (uint3 DTid : SV_DispatchThreadID)
 						// float3x3 P = (2.0f * mup * (F - R)) + lambdap * (j - 1.0f) * j * FinvT;
 						// float3x3 stress = 1.0f / j * mul(P, transpose(F));
 
-						c.mass += weight * particle.mass;
-						c.mass_x_velocity += weight * (particle.mass * particle.velocity
+						cell.mass += weight * particle.mass;
+						cell.mass_x_velocity += weight * (particle.mass * particle.velocity
 							+ mul(apic, (gridPosition - particle.position)));
 					}
 				}
 			}
 		}
 	}
-	_GridBuffer[CellID] = c;
+	_GridBuffer[CellID] = cell;
 
 }

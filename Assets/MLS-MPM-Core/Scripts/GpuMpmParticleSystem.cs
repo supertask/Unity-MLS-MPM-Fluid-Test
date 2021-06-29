@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Linq;
@@ -8,11 +9,11 @@ using Unity.Mathematics;
 using UnityEngine.Assertions;
 
 using ComputeShaderUtil;
+using NearestNeighbor;
 
 
 namespace UnityMPM
 {
-    //[StructLayout(LayoutKind.Sequential, Size = 108)]
     public struct MpmParticle
     {
         public enum Type
@@ -32,7 +33,6 @@ namespace UnityMPM
         public float Jp; //4 byte
     };
 
-    //[StructLayout(LayoutKind.Sequential, Size = 48)]
     public struct MpmCell
     {
         public float mass; //4 byte
@@ -40,6 +40,17 @@ namespace UnityMPM
         public float3 velocity; //12 byte
         public float3 force; //12 byte
         public float2 padding; //8 byte
+    };
+
+
+    // Mpm Cell for interlocked add
+    public struct MpmCellInterlocked
+    {
+        public int mass;
+        public int3 mass_x_velocity;
+        public float3 velocity;
+        public float3 force;
+        public float2 padding;
     };
 
     public class GpuMpmParticleSystem : MonoBehaviour
@@ -60,18 +71,6 @@ namespace UnityMPM
         //[SerializeField] protected Grid<Cell> grid;
         #endregion
 
-        #region Private members
-        private Kernel initParticlesKernel, emitParticlesKernel;
-        private Kernel initGridKernel, particlesToGridKernel, updateGridKernel, gridToParticlesKernel;
-        private ComputeBuffer gridBuffer;
-        private ComputeBuffer particlesBuffer;
-        private ComputeBuffer waitingParticleIndexesBuffer;
-        private ComputeBuffer particleCountBuffer;
-        private int[] particleCounts;
-        private int numOfCells;
-        private int maxNumOfParticles;
-        private Bounds gridBounds;
-        #endregion
 
         #region Public members
         public ComputeBuffer ParticlesBuffer => particlesBuffer;
@@ -79,8 +78,27 @@ namespace UnityMPM
         public int MaxNumOfParticles => maxNumOfParticles;
         public int NumOfCells => numOfCells;
         public Bounds GridBounds => gridBounds;
+
+        public static int MAX_EMIT_NUM = 8;
         #endregion
 
+        #region Private members
+        private Kernel initParticlesKernel, emitParticlesKernel, copyParticlesKernel;
+        private Kernel initGridKernel, particlesToGridKernel, updateGridKernel, gridToParticlesKernel;
+        private ComputeBuffer gridBuffer;
+        private ComputeBuffer particlesBuffer;
+        private ComputeBuffer sortedParticlesBuffer;
+        private ComputeBuffer waitingParticleIndexesBuffer;
+        private ComputeBuffer particleCountBuffer;
+        private GridOptimizer3D<MpmParticle> gridOptimizer;
+
+        private int[] particleCounts;
+        private int numOfCells;
+        private int maxNumOfParticles;
+        private Bounds gridBounds;
+        private Vector3 gridCellStartPos;
+        private int numOfEmitParticles;
+        #endregion
 
         #region Shader property IDs
         public static class ShaderID
@@ -107,6 +125,7 @@ namespace UnityMPM
             public static int GridBuffer = Shader.PropertyToID("_GridBuffer");
             public static int ParticlesBuffer = Shader.PropertyToID("_ParticlesBuffer");
             public static int ParticlesBufferRead = Shader.PropertyToID("_ParticlesBufferRead");
+            public static int ParticlesBufferWrite = Shader.PropertyToID("_ParticlesBufferWrite");
             public static int WaitingParticleIndexesBuffer = Shader.PropertyToID("_WaitingParticleIndexesBuffer");
             public static int PoolParticleIndexesBuffer = Shader.PropertyToID("_PoolParticleIndexesBuffer");
         }
@@ -114,23 +133,33 @@ namespace UnityMPM
 
         protected void OnEnable()
         {
-            this.maxNumOfParticles = 1000;
+            this.maxNumOfParticles = 256 * 4;
+            //this.maxNumOfParticles = 512 * 16;
             this.numOfCells = this.gridWidth * this.gridHeight * this.gridDepth;
 
             // Particles used on MPM
-            this.particlesBuffer = new ComputeBuffer(this.maxNumOfParticles,
-                Marshal.SizeOf(typeof(MpmParticle)));
-            this.particlesBuffer.SetData(Enumerable.Range(0, this.maxNumOfParticles)
-                .Select(_ => new MpmParticle()).ToArray());
+            MpmParticle[] mpmParticles = Enumerable.Range(0, this.maxNumOfParticles)
+                .Select(_ => new MpmParticle()).ToArray();
+            this.particlesBuffer = new ComputeBuffer(this.maxNumOfParticles, Marshal.SizeOf(typeof(MpmParticle)));
+            this.particlesBuffer.SetData(mpmParticles);
+            this.sortedParticlesBuffer = new ComputeBuffer(this.maxNumOfParticles, Marshal.SizeOf(typeof(MpmParticle)));
+            this.sortedParticlesBuffer.SetData(mpmParticles);
+
+            // Dead list
             this.waitingParticleIndexesBuffer = new ComputeBuffer(
                 this.maxNumOfParticles, Marshal.SizeOf(typeof(int)), ComputeBufferType.Append);
             this.waitingParticleIndexesBuffer.SetCounterValue(0); // IMPORTANT: Append/Consumeの追加削除位置を0に設定する
-
 
             // Grid used on MPM
             this.gridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(MpmCell)));
             this.gridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
                 .Select(_ => new MpmCell()).ToArray());
+
+            // Bitonic sorter of grid
+            this.gridOptimizer = new GridOptimizer3D<MpmParticle>(
+                this.maxNumOfParticles, this.GetGridBounds().size,
+                new Vector3(this.gridWidth, this.gridHeight, this.gridDepth)
+            );
 
             // Particle's counter
             this.particleCountBuffer = new ComputeBuffer(4, Marshal.SizeOf(typeof(int)), ComputeBufferType.IndirectArguments);
@@ -139,18 +168,31 @@ namespace UnityMPM
 
             this.initParticlesKernel = new Kernel(this.particlesManagerCS, "InitParticles");
             this.emitParticlesKernel = new Kernel(this.particlesManagerCS, "EmitParticles");
+            this.copyParticlesKernel = new Kernel(this.particlesManagerCS, "CopyParticles");
             this.initGridKernel = new Kernel(this.initGridCS, "InitGrid");
-            this.particlesToGridKernel = new Kernel(this.particlesToGridCS, "ParticleToGrid");
+            this.particlesToGridKernel = new Kernel(this.particlesToGridCS, "ParticleToGridGathering");
             this.updateGridKernel = new Kernel(this.updateGridCS, "UpdateGrid");
             this.gridToParticlesKernel = new Kernel(this.gridToParticlesCS, "GridToParticle");
+
+            this.numOfEmitParticles = (MAX_EMIT_NUM / (int) this.emitParticlesKernel.ThreadX) * (int)this.emitParticlesKernel.ThreadX;
 
             this.ComputeInitParticles();
         }
         protected void Update()
         {
             this.gridBounds = this.GetGridBounds();
+            this.gridCellStartPos = this.gridBounds.center - this.gridBounds.extents;
+
+            // Particle Counter
+            particleCountBuffer.SetData(this.particleCounts);
+            ComputeBuffer.CopyCount(this.waitingParticleIndexesBuffer, particleCountBuffer, 0);
+            particleCountBuffer.GetData(this.particleCounts);
+
             this.ComputeEmitParticles();
             this.ComputeInitGrid();
+
+            this.ComputeSortByGridIndex();
+
             this.ComputeParticlesToGrid();
             this.ComputeUpdateGrid();
             this.ComputeGridToParticles();
@@ -168,20 +210,14 @@ namespace UnityMPM
                 (int)this.initParticlesKernel.ThreadY,
                 (int)this.initParticlesKernel.ThreadZ);
 
-            // Particle Counter
-            particleCountBuffer.SetData(particleCounts);
-            ComputeBuffer.CopyCount(this.waitingParticleIndexesBuffer, particleCountBuffer, 0);
-            particleCountBuffer.GetData(particleCounts);
-            //Debug.LogFormat("particle count: {0}, {1}, {2}, {3} ", particleCounts[0], particleCounts[1], particleCounts[2], particleCounts[3]);
-
-
             //this.DebugParticleBuffer();
             //this.DebugParticleIndexBuffer();
         }
 
-
         void ComputeEmitParticles()
         {
+            if (this.particleCounts[0] < this.numOfEmitParticles) { return; }
+
             this.particlesManagerCS.SetFloat(ShaderID.SphereRadius, this.sphereRadius);
             this.particlesManagerCS.SetInt(ShaderID.ParticleType, (int)MpmParticle.Type.Elastic);
             this.particlesManagerCS.SetBuffer(this.emitParticlesKernel.Index,
@@ -189,12 +225,81 @@ namespace UnityMPM
             this.particlesManagerCS.SetBuffer(this.emitParticlesKernel.Index,
                 ShaderID.ParticlesBuffer, this.particlesBuffer);
             this.particlesManagerCS.Dispatch(this.emitParticlesKernel.Index,
-                Mathf.CeilToInt(this.maxNumOfParticles / (float)this.emitParticlesKernel.ThreadX),
+                Mathf.CeilToInt(this.numOfEmitParticles / (float)this.emitParticlesKernel.ThreadX),
                 (int)this.emitParticlesKernel.ThreadY,
                 (int)this.emitParticlesKernel.ThreadZ);
             //Debug.Log("num: " + Mathf.CeilToInt(this.maxNumOfParticles / (float)this.emitParticlesKernel.ThreadX) );
 
             //this.DebugParticleBuffer();
+        }
+
+        void ComputeCopyParticles(ref ComputeBuffer inBuffer, ref ComputeBuffer outBuffer)
+        {
+            this.particlesManagerCS.SetBuffer(this.copyParticlesKernel.Index,
+                ShaderID.ParticlesBufferRead, inBuffer);
+            this.particlesManagerCS.SetBuffer(this.copyParticlesKernel.Index,
+                ShaderID.ParticlesBufferWrite, outBuffer);
+            this.particlesManagerCS.Dispatch(this.copyParticlesKernel.Index,
+                Mathf.CeilToInt(this.maxNumOfParticles / (float)this.copyParticlesKernel.ThreadX),
+                (int)this.copyParticlesKernel.ThreadY,
+                (int)this.copyParticlesKernel.ThreadZ);
+        }
+
+        void ComputeSortByGridIndex()
+        {
+            //Debug.LogFormat("particle count: {0}, {1}, {2}, {3} ", this.particleCounts[0], this.particleCounts[1], this.particleCounts[2], this.particleCounts[3]);
+
+            Debug.Log("------------------");
+            //this.DebugParticleBuffer(ref this.particlesBuffer);
+            //Debug.Log("Before sort end ------------------");
+
+            //this.ComputeCopyParticles(ref this.particlesBuffer, ref this.sortedParticlesBuffer);
+
+            /*
+            //this.sortedParticlesBuffer.GetData(particleData);
+            for (int i = 512; i < 512+4; i++) {
+                float3 pos = particleData[i].position;
+                uint3 index3d = Util.ParticlePositionToCellIndex3D(pos, this.gridCellStartPos, this.gridSpacingH);
+                uint cellIndex = Util.CellIndex3DTo1D(index3d, this.gridWidth, this.gridHeight);
+
+                Debug.LogFormat("i={0}, particleData={1}, cellIndex={2}", i, particleData[i].position, cellIndex);
+            }
+            */
+
+            // bitonic sort for Particles To Grid
+            // particles will be sorted by grid index
+            this.gridOptimizer.SetCellStartPos(this.gridCellStartPos); //When the grid has moved by user, it will change
+            this.gridOptimizer.GridSort(ref this.particlesBuffer); 
+
+
+            MpmParticle[] particleData = new MpmParticle[1024];
+            //this.sortedParticlesBuffer.GetData(particleData);
+            this.particlesBuffer.GetData(particleData);
+
+            ComputeBuffer gridBuffer = this.gridOptimizer.GetGridBuffer();
+            Uint2[] gridData = new Uint2[1024];
+            gridBuffer.GetData(gridData);
+            for (int i = 0; i < 100; i++) {
+                if (0 < gridData[i].y && gridData[i].y < 512+4) {
+                    Debug.LogFormat("GGGGGGG, gridIndex={0}, particleIndex={1}", gridData[i].x, gridData[i].y);
+
+                    Uint2 gridAndParticlePair = gridData[i];
+                    float3 pos = particleData[gridAndParticlePair.y].position;
+                    uint3 index3d = Util.ParticlePositionToCellIndex3D(pos,
+                            this.gridCellStartPos, this.gridSpacingH);
+                    uint cellIndex = Util.CellIndex3DTo1D(index3d, this.gridWidth, this.gridHeight);
+
+                    Debug.LogFormat("i={0}, gridCellIndex={1}, particleIndex={2}, particlePos={3}, cellIndex={4}: ",
+                        i, gridAndParticlePair.x, gridAndParticlePair.y, pos, cellIndex );
+
+                }
+            }
+
+
+            //Debug.Log("After sort begin ------------------");
+            //this.DebugParticleBuffer(ref this.sortedParticlesBuffer);
+            //Debug.Log("After sort end ------------------");
+
         }
 
         void SetCommonParameters(ComputeShader target)
@@ -242,7 +347,6 @@ namespace UnityMPM
                 Mathf.CeilToInt(this.numOfCells / (float)this.updateGridKernel.ThreadX),
                 (int)this.updateGridKernel.ThreadY,
                 (int)this.updateGridKernel.ThreadZ);
-            //this.DebugGridBuffer();
         }
 
 
@@ -278,11 +382,11 @@ namespace UnityMPM
             }
         }
 
-        void DebugParticleBuffer()
+        void DebugParticleBuffer(ref ComputeBuffer buffer)
         {
             int N = 4; //this.maxNumOfParticles
             MpmParticle[] particles = new MpmParticle[this.maxNumOfParticles];
-            this.particlesBuffer.GetData(particles);
+            buffer.GetData(particles);
             for (int i = 0; i < N; i++)
             {
                 Debug.LogFormat("particle: position = {0}, type = {1}, ", particles[i].position, particles[i].type);
@@ -321,6 +425,8 @@ namespace UnityMPM
 
         public void ReleaseAll()
         {
+            this.gridOptimizer.Release();
+
             if (this.waitingParticleIndexesBuffer != null)
             {
                 this.waitingParticleIndexesBuffer.Release();
@@ -335,6 +441,11 @@ namespace UnityMPM
             {
                 this.particlesBuffer.Release();
                 this.particlesBuffer = null;
+            }
+            if (this.sortedParticlesBuffer != null)
+            {
+                this.sortedParticlesBuffer.Release();
+                this.sortedParticlesBuffer = null;
             }
             if (this.particleCountBuffer != null)
             {

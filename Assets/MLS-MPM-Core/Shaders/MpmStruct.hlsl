@@ -20,4 +20,12 @@ struct MpmCell {
 	float2 padding;
 };
 
+// For GPU optimazation of MPM
+// https://dl.acm.org/doi/10.1145/3272127.3275044
+// http://pages.cs.wisc.edu/~sifakis/papers/GPU_MPM.pdf
+struct P2GMass {
+	float mass;
+	float3 mass_x_velocity;
+};
+
 #endif

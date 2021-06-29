@@ -15,6 +15,7 @@ namespace UnityMPM
         public static class ShaderID
         {
             public static int DebugObjectSize = Shader.PropertyToID("_DebugObjectSize");
+            public static int InvViewMatrix = Shader.PropertyToID("_InvViewMatrix");
         }
         void Start()
         {
@@ -46,7 +47,7 @@ namespace UnityMPM
             this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionHeight, this.mpmParticleSystem.gridHeight);
             this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionDepth, this.mpmParticleSystem.gridDepth);
 
-            this.material.SetMatrix("_InvViewMatrix", inverseViewMatrix);
+            this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
             this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.GridBuffer, this.mpmParticleSystem.GridBuffer);
             this.material.SetPass(0);
 

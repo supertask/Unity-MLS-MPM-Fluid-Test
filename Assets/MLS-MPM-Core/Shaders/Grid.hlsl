@@ -46,7 +46,6 @@ inline float3x3 InvApicD()
 	return 4.0f * invH * invH * Identity3x3; // identiy matrix 3x3
 }
 
-// 動かない原因はここっぽい
 inline uint3 ParticlePositionToCellIndex3D(float3 pos)
 {
 	// return uint3(pos-_CellStartPos); // by Yuan
