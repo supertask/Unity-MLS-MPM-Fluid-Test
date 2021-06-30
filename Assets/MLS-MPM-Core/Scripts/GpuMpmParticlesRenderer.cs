@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using Unity.Mathematics;
 using UnityEditor;
 
-namespace UnityMPM
+namespace MlsMpm
 {
     [RequireComponent(typeof(GpuMpmParticleSystem))]
     public class GpuMpmParticlesRenderer : MonoBehaviour

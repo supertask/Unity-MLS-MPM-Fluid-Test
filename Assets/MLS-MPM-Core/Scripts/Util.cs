@@ -4,7 +4,7 @@ using UnityEngine;
 
 using Unity.Mathematics;
 
-namespace UnityMPM {
+namespace MlsMpm {
 
     public class Util
     {
@@ -23,6 +23,16 @@ namespace UnityMPM {
             return (uint) (idx.x + idx.y * _GridResolutionWidth +
                 idx.z * _GridResolutionWidth * _GridResolutionHeight);
         }
+
+        public static void ReleaseBuffer(ComputeBuffer buffer)
+        {
+            if (buffer != null)
+            {
+                buffer.Release();
+                buffer = null;
+            }
+        }
+
     }
 
 }

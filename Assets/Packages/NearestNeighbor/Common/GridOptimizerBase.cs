@@ -86,7 +86,7 @@ public abstract class GridOptimizerBase {
         */
 
         /*
-        UnityMPM.MpmParticle[] particleData = new UnityMPM.MpmParticle[1024];
+        MlsMpm.MpmParticle[] particleData = new MlsMpm.MpmParticle[1024];
         particlesBuffer.GetData(particleData);
 
         uint2[] gridData = new uint2[1024];
@@ -97,9 +97,9 @@ public abstract class GridOptimizerBase {
             //}
             uint2 gridAndParticlePair = gridData[i];
             float3 pos = particleData[gridAndParticlePair.y].position;
-            uint3 index3d = UnityMPM.Util.ParticlePositionToCellIndex3D(pos,
+            uint3 index3d = MlsMpm.Util.ParticlePositionToCellIndex3D(pos,
                     this.cellStartPos, this.gridH);
-            uint cellIndex = UnityMPM.Util.CellIndex3DTo1D(index3d, 64, 64);
+            uint cellIndex = MlsMpm.Util.CellIndex3DTo1D(index3d, 64, 64);
 
             Debug.LogFormat("i={0}, gridCellIndex={1}, particleIndex={2}, particlePos={3}, cellIndex={4}: ",
                 i, gridAndParticlePair.x, gridAndParticlePair.y, pos, cellIndex );

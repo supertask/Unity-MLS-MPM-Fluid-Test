@@ -1,5 +1,5 @@
 ﻿//
-// 1. ParticleToGridScatteringOptでmass, mass_x_velocityを計算して_GridAndMassIdsBufferWriteに保存
+// 1. ParticleToGridScatteringOptでmass, mass_x_velocityを計算して_GridAndMassIdsBufferに保存
 // 2. grid cell indexをキーに1. の配列をソート
 // 3. BoundaryAndIntervalでBoundaryとIntervalを計算
 // 4. GatherAndWriteでParallel reduction sumで計算してグリッドに書き出す
@@ -23,11 +23,9 @@ int _NumOfParticles;
 // lock-free based GPU optimazation
 // x = grid index, y = lane index(particle num * neighbor grid num). Sorted by grid index
 // Used in ParticleToGridScatteringOpt
-StructuredBuffer<uint2> _GridAndMassIdsBufferRead;
-StructuredBuffer<P2GMass> _P2GMassBufferRead;
 // Used in ParticleToGridScatteringOpt
-RWStructuredBuffer<uint2> _GridAndMassIdsBufferWrite;
-RWStructuredBuffer<P2GMass> _P2GMassBufferWrite;
+RWStructuredBuffer<uint2> _GridAndMassIdsBuffer;
+RWStructuredBuffer<P2GMass> _P2GMassBuffer;
 
 // if _GridBufferRead'x is 0000011111122222334444,
 // _GridIndicesBufferRead will be
@@ -48,9 +46,8 @@ float _HyperElasticLambda;
 RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
 RWStructuredBuffer<MpmCell> _GridBuffer;
 
-float _MAX_NUM_OF_PARTICLES;
-float _NEIGHBOR_LENGTH; //27
-RWStructuredBuffer<int> _CellNeighbor; //27 array
+float _NeighborLength; //27
+RWStructuredBuffer<int> _CellNeighborBuffer; //27 array
 
 [numthreads(THREAD_1D,1,1)]
 void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)
@@ -111,34 +108,34 @@ void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 	//		for(int gz = -1; gz <=1; ++gz) {
 
 
-	//float _MAX_NUM_OF_PARTICLES
-	//float _NEIGHBOR_LENGTH //27
-	//RWStructuredBuffer<int> _CellNeighbor; //27
+	//float _NumOfParticles
+	//float _NeighborLength //27
+	//RWStructuredBuffer<int> _CellNeighborBuffer; //27
 
-	for (int ni = 0; ni < _NEIGHBOR_LENGTH; ni++) {
-		int3 cellIndex3D = centerCellIndex3D + _CellNeighbor[ni];
+	for (int ni = 0; ni < _NeighborLength; ni++) {
+		int3 cellIndex3D = centerCellIndex3D + _CellNeighborBuffer[ni];
 		uint cellIndex = CellIndex3DTo1D(cellIndex3D);
 
 		if (InGrid(cellIndex))
 		{
 			float3 gridPositionWS = CellIndex3DToPositionWS(cellIndex);
-			float weight = GetWeight(particle.position, _CellNeighbor[ni]);
+			float weight = GetWeight(particle.position, _CellNeighborBuffer[ni]);
 
 			P2GMass p2gMass;
 			p2gMass.mass = weight * particle.mass;
 			p2gMass.mass_x_velocity = weight * (particle.mass * particle.velocity
 				+ mul(apic, (gridPositionWS - particle.position)));
 
-			uint laneId = particleId + ni * _MAX_NUM_OF_PARTICLES;
+			uint laneId = particleId + ni * _NumOfParticles;
 
 			// Used for Parallel reduction sum on mass/mass_x_velocity calculation
-			// _P2GMassBufferWrite will be sorted by grid cell index with _GridBufferWrite
-			_P2GMassBufferWrite[laneId] = p2gMass;
+			// _P2GMassBuffer will be sorted by grid cell index with _GridBufferWrite
+			_P2GMassBuffer[laneId] = p2gMass;
 
-			// x = grid cell index, y = lane id of _P2GMassBufferWrite
-			// _GridAndMassIdsBufferWrite will be sorted by grid cell index. 
+			// x = grid cell index, y = lane id of _P2GMassBuffer
+			// _GridAndMassIdsBuffer will be sorted by grid cell index. 
 			// Used for Parallel reduction sum on mass/mass_x_velocity calculation
-			_GridAndMassIdsBufferWrite[laneId] = uint2(cellIndex, laneId);
+			_GridAndMassIdsBuffer[laneId] = uint2(cellIndex, laneId);
 		}
 	}
 
@@ -157,8 +154,8 @@ void BoundaryAndInterval(uint3 DTid : SV_DispatchThreadID)
 {
 	const uint laneId = DTid.x;
 	if (laneId-1 < 0) { return; }
-	const uint cellId = _GridAndMassIdsBufferRead[laneId].x;
-	const uint prevCellId = _GridAndMassIdsBufferRead[laneId-1].x;
+	const uint cellId = _GridAndMassIdsBuffer[laneId].x;
+	const uint prevCellId = _GridAndMassIdsBuffer[laneId-1].x;
 
 	uint boundary = (laneId == 0 || cellId != prevCellId) ? 1 : 0;
 
@@ -182,7 +179,7 @@ groupshared float3 blockMassXVelocity[512];
 void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 {
 	const uint laneId = DTid.x;
-	uint2 cellAndMassId = _GridAndMassIdsBufferRead[laneId];
+	uint2 cellAndMassId = _GridAndMassIdsBuffer[laneId];
 	uint cellIndex  = cellAndMassId.x;
 	uint massIndex  = cellAndMassId.x;
 	uint2 startAndEndIndices = _GridIndicesBufferRead[cellIndex];
@@ -192,10 +189,10 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	uint2 boundaryAndInterval = _BoundaryAndIntervalBuffer[laneId];
 	uint boundary = boundaryAndInterval.x;
 	uint regionInterval = boundaryAndInterval.y;
-	uint particleId = _GridAndMassIdsBufferRead[startLaneId].y;
+	uint particleId = _GridAndMassIdsBuffer[startLaneId].y;
 
 	// Store each particle info of 256 threads
-	P2GMass p2gMass = _P2GMassBufferRead[massIndex];
+	P2GMass p2gMass = _P2GMassBuffer[massIndex];
 	blockMass[GI] = p2gMass.mass;
 	blockMassXVelocity[GI] = p2gMass.mass_x_velocity; //仮
 	GroupMemoryBarrierWithGroupSync();

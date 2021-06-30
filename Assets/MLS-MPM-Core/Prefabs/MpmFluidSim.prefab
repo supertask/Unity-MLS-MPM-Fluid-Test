@@ -47,17 +47,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   particlesManagerCS: {fileID: 7200000, guid: c8e12ab375ba01a4cbb8a95e7904e469, type: 3}
   initGridCS: {fileID: 7200000, guid: 51d655339f61f234c905961723cb6be0, type: 3}
-  particlesToGridCS: {fileID: 7200000, guid: 50d8eb457faadcc4194cdee8de727d08, type: 3}
+  p2gCS: {fileID: 7200000, guid: 50d8eb457faadcc4194cdee8de727d08, type: 3}
+  p2gScatteringOptCS: {fileID: 7200000, guid: 2f6618ceb3c55c542a710fdc8e329df1, type: 3}
   updateGridCS: {fileID: 7200000, guid: bdc1eb0633820bb47ad1749a9a75d507, type: 3}
   gridToParticlesCS: {fileID: 7200000, guid: f58c60ada5c7acb43b35ec1862e32d51, type: 3}
   gridSpacingH: 0.8
   gridWidth: 64
   gridHeight: 64
   gridDepth: 64
-  youngsModulusE: 400
-  poissonRatioNu: 0.2
-  hyperElasticHardening: 10
-  sphereRadius: 5
+  YoungsModulusE: 500
+  PoissonRatioNu: 0.2
+  HyperElasticHardening: 10
+  SphereRadius: 3
+  MaxNumOfParticles: 1024
 --- !u!114 &522039639
 MonoBehaviour:
   m_ObjectHideFlags: 0
