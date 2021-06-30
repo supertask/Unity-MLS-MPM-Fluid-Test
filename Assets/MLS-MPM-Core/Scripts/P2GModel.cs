@@ -15,7 +15,9 @@ namespace MlsMpm
         {
             public static int CellNeighborBuffer = Shader.PropertyToID("_CellNeighborBuffer");
             public static int P2GMassBuffer = Shader.PropertyToID("_P2GMassBuffer");
+            public static int GridIndicesBuffer = Shader.PropertyToID("_GridIndicesBuffer");
             public static int GridAndMassIdsBuffer = Shader.PropertyToID("_GridAndMassIdsBuffer");
+            public static int BoundaryAndIntervalBuffer = Shader.PropertyToID("_BoundaryAndIntervalBuffer");
 
             public static int HyperElasticHardening = Shader.PropertyToID("_HyperElasticHardening");
             public static int HyperElasticMu = Shader.PropertyToID("_HyperElasticMu");
@@ -33,7 +35,9 @@ namespace MlsMpm
         private ComputeBuffer cellNeighborBuffer;
         private ComputeBuffer gridAndMassIdsBuffer;
         private ComputeBuffer p2gMassBuffer;
+        private ComputeBuffer boundaryAndIntervalBuffer;
         private Kernel p2gKernel, p2gScatteringOptKernel, p2gScatteringKernel;
+        private Kernel boundaryAndIntervalKernel, gatherAndWriteKernel;
 
         private int numOfP2GMasses;
         private int maxNumOfParticles;
@@ -57,8 +61,10 @@ namespace MlsMpm
 
         private void initBuffer()
         {
-            this.p2gKernel = new Kernel(this.p2gCS, "ParticleToGridGathering");
-            this.p2gScatteringOptKernel = new Kernel(this.p2gScatteringOptCS, "ParticleToGridScatteringOpt");
+            this.p2gKernel = new Kernel(this.p2gCS, "P2GGathering");
+            this.p2gScatteringOptKernel = new Kernel(this.p2gScatteringOptCS, "P2GScatteringOpt");
+            this.boundaryAndIntervalKernel = new Kernel(this.p2gScatteringOptCS, "BoundaryAndInterval");
+            this.gatherAndWriteKernel = new Kernel(this.p2gScatteringOptCS, "GatherAndWrite");
 
             // Neighbor cell indexes
             int3[] cellNeighbors = new int3[CELL_NEIGHBOR_LENGTH];
@@ -84,6 +90,11 @@ namespace MlsMpm
                 Marshal.SizeOf(typeof(int2)));
             this.gridAndMassIdsBuffer.SetData(gridAndMassIds);
 
+            int2[] boundaryAndIntervals = Enumerable.Range(0, this.numOfP2GMasses)
+                .Select(_ => new int2(-1,-1)).ToArray();
+            this.boundaryAndIntervalBuffer = new ComputeBuffer(this.numOfP2GMasses,
+                Marshal.SizeOf(typeof(int2)));
+            this.boundaryAndIntervalBuffer.SetData(boundaryAndIntervals);
         }
         
 
@@ -115,8 +126,11 @@ namespace MlsMpm
         }
 
 
-        public void ComputeParticlesToGridScatteringOpt() {
+        public void ComputeParticlesToGridScatteringOpt()
+        {
+            //
             // 1. Compute Particle to Grid
+            //
             this.mediator.SetCommonParameters(p2gScatteringOptCS);
             this.SetCommonP2GParameters(p2gScatteringOptCS);
 
@@ -133,29 +147,55 @@ namespace MlsMpm
                 (int)this.p2gScatteringOptKernel.ThreadZ);
             //this.DebugParticleBuffer();
 
-            /*
             //
             // 2. bitonic sort for Particles To Grid
             // particles will be sorted by grid index
             //
-            this.gridOptimizer.SetCellStartPos(this.gridCellStartPos); //When the grid has moved by user, it will change
-            this.gridOptimizer.GridSort(ref this.particlesBuffer); 
+            //this.gridOptimizer.SetCellStartPos(this.gridCellStartPos); //When the grid has moved by user, it will change
+            //this.gridOptimizer.GridSort(ref this.particlesBuffer); 
 
             //
             // 3. Calc boundary and region interval for No.4
             //
 
+            /*
+            //ここはソートの結果
+            //this.p2gScatteringOptCS.SetBuffer(this.p2gScatteringOptKernel.Index,
+            //    ShaderID.GridIndicesBuffer, this.gridIndicesBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.boundaryAndIntervalKernel.Index,
+                ShaderID.GridAndMassIdsBuffer, this.gridAndMassIdsBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.boundaryAndIntervalKernel.Index,
+                ShaderID.BoundaryAndIntervalBuffer, this.boundaryAndIntervalBuffer);
+            this.p2gScatteringOptCS.Dispatch(this.boundaryAndIntervalKernel.Index,
+                Mathf.CeilToInt(this.numOfP2GMasses / (float)this.boundaryAndIntervalKernel.ThreadX),
+                (int)this.boundaryAndIntervalKernel.ThreadY,
+                (int)this.boundaryAndIntervalKernel.ThreadZ);
+
             //
             // 4. Calc parallel reduction sum and insert into grid
             //
-
+            //ここはソートの結果
+            //this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+            //    ShaderID.GridIndicesBuffer, this.gridIndicesBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+                ShaderID.GridAndMassIdsBuffer, this.gridAndMassIdsBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+                ShaderID.BoundaryAndIntervalBuffer, this.boundaryAndIntervalBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+                ShaderID.P2GMassBuffer, this.p2gMassBuffer);
+            this.p2gScatteringOptCS.Dispatch(this.gatherAndWriteKernel.Index,
+                Mathf.CeilToInt(this.numOfP2GMasses / (float)this.gatherAndWriteKernel.ThreadX),
+                (int)this.gatherAndWriteKernel.ThreadY,
+                (int)this.gatherAndWriteKernel.ThreadZ);
             */
+
         }
         public void ReleaseAll()
         {
             Util.ReleaseBuffer(this.cellNeighborBuffer);
             Util.ReleaseBuffer(this.gridAndMassIdsBuffer);
             Util.ReleaseBuffer(this.p2gMassBuffer);
+            Util.ReleaseBuffer(this.boundaryAndIntervalBuffer);
         }
 
         // Get the parameter, mu, of hyper elasticity

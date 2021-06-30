@@ -1,10 +1,10 @@
 ﻿//
-// 1. ParticleToGridScatteringOptでmass, mass_x_velocityを計算して_GridAndMassIdsBufferに保存
+// 1. P2GScatteringOptでmass, mass_x_velocityを計算して_GridAndMassIdsBufferに保存
 // 2. grid cell indexをキーに1. の配列をソート
 // 3. BoundaryAndIntervalでBoundaryとIntervalを計算
 // 4. GatherAndWriteでParallel reduction sumで計算してグリッドに書き出す
 //
-#pragma kernel ParticleToGridScatteringOpt
+#pragma kernel P2GScatteringOpt
 #pragma kernel BoundaryAndInterval
 #pragma kernel GatherAndWrite
 
@@ -22,8 +22,8 @@ int _NumOfParticles;
 
 // lock-free based GPU optimazation
 // x = grid index, y = lane index(particle num * neighbor grid num). Sorted by grid index
-// Used in ParticleToGridScatteringOpt
-// Used in ParticleToGridScatteringOpt
+// Used in P2GScatteringOpt
+// Used in P2GScatteringOpt
 RWStructuredBuffer<uint2> _GridAndMassIdsBuffer;
 RWStructuredBuffer<P2GMass> _P2GMassBuffer;
 
@@ -33,7 +33,7 @@ RWStructuredBuffer<P2GMass> _P2GMassBuffer;
 // Start index of grid buffer  0 5  11 16 18
 // End index of grid buffer    4 10 15 17 21
 // Then particle index is now trackable by using Start and End index
-StructuredBuffer<uint2> _GridIndicesBufferRead;
+StructuredBuffer<uint2> _GridIndicesBuffer;
 RWStructuredBuffer<uint2> _BoundaryAndIntervalBuffer;
 
 //
@@ -50,7 +50,7 @@ float _NeighborLength; //27
 RWStructuredBuffer<int> _CellNeighborBuffer; //27 array
 
 [numthreads(THREAD_1D,1,1)]
-void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)
+void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 {
     const uint particleId = DTid.x;
 	MpmParticle particle = _ParticlesBufferRead[particleId];
@@ -159,7 +159,7 @@ void BoundaryAndInterval(uint3 DTid : SV_DispatchThreadID)
 
 	uint boundary = (laneId == 0 || cellId != prevCellId) ? 1 : 0;
 
-	uint laneIdEnd = _GridIndicesBufferRead[cellId].y;
+	uint laneIdEnd = _GridIndicesBuffer[cellId].y;
 	uint regionInterval = laneIdEnd - 1 - laneId;
 
 	_BoundaryAndIntervalBuffer[laneId] = uint2(boundary, regionInterval);
@@ -182,7 +182,7 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	uint2 cellAndMassId = _GridAndMassIdsBuffer[laneId];
 	uint cellIndex  = cellAndMassId.x;
 	uint massIndex  = cellAndMassId.x;
-	uint2 startAndEndIndices = _GridIndicesBufferRead[cellIndex];
+	uint2 startAndEndIndices = _GridIndicesBuffer[cellIndex];
 	uint startLaneId = startAndEndIndices.x;
 	uint endLaneId = startAndEndIndices.y;
 

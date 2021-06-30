@@ -14,8 +14,6 @@ using NearestNeighbor;
 
 namespace MlsMpm
 {
-
-
     public class GpuMpmParticleSystem : MonoBehaviour
     {
         #region Asset reference

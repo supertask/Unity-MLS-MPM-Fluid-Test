@@ -1,4 +1,4 @@
-﻿#pragma kernel ParticleToGridGathering
+﻿#pragma kernel P2GGathering
 
 //Assets/MLS-MPM-Core/Shaders
 #include "MpmStruct.hlsl"
@@ -20,7 +20,7 @@ RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
 RWStructuredBuffer<MpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
-void ParticleToGridGathering(uint3 DTid : SV_DispatchThreadID)
+void P2GGathering(uint3 DTid : SV_DispatchThreadID)
 {
     const uint CellID = DTid.x;
 	MpmCell cell = _GridBuffer[CellID];
