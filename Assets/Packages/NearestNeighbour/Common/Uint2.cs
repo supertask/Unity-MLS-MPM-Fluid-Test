@@ -1,4 +1,4 @@
-﻿namespace NearestNeighbor
+﻿namespace NearestNeighbour
 {
 
     public struct Uint2

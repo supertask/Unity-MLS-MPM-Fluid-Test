@@ -16,8 +16,7 @@ cbuffer grid {
 	float _GridH;
 };
 
-StructuredBuffer  <uint2>	_GridIndicesBufferRead;
-RWStructuredBuffer<uint2>	_GridIndicesBufferWrite;
+RWStructuredBuffer<uint2>	_GridIndicesBuffer;
 float3 _CellStartPos;
 
 
@@ -47,4 +46,4 @@ uint GridGetValue(uint2 pair) {
 	return pair.y;
 }
 
-#define LOOP_AROUND_NEIGHBOR(pos) int3 G_XYZ = (int3)GridCalculateCell(pos); for(int Z = max(G_XYZ.z - 1, 0); Z <= min(G_XYZ.z + 1, _GridDim.z - 1); Z++) for (int Y = max(G_XYZ.y - 1, 0); Y <= min(G_XYZ.y + 1, _GridDim.y - 1); Y++)  for (int X = max(G_XYZ.x - 1, 0); X <= min(G_XYZ.x + 1, _GridDim.x - 1); X++)
+#define LOOP_AROUND_NEIGHBOUR(pos) int3 G_XYZ = (int3)GridCalculateCell(pos); for(int Z = max(G_XYZ.z - 1, 0); Z <= min(G_XYZ.z + 1, _GridDim.z - 1); Z++) for (int Y = max(G_XYZ.y - 1, 0); Y <= min(G_XYZ.y + 1, _GridDim.y - 1); Y++)  for (int X = max(G_XYZ.x - 1, 0); X <= min(G_XYZ.x + 1, _GridDim.x - 1); X++)

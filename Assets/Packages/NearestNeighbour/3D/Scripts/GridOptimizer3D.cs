@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Runtime.InteropServices;
 
-namespace NearestNeighbor {
+namespace NearestNeighbour {
 
     public class GridOptimizer3D<T> : GridOptimizerBase where T : struct {
         

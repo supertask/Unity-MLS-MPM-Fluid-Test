@@ -23,6 +23,7 @@ namespace MlsMpm
         public float3x3 C; //4 * 9 byte
         public float3x3 Fe; //4 * 9 byte
         public float Jp; //4 byte
+        public override string ToString() => $"MpmParticle(type={type}, position={position}, velocity={velocity}, mass={mass})";
     };
 
     public struct MpmCell
@@ -32,6 +33,10 @@ namespace MlsMpm
         public float3 velocity; //12 byte
         public float3 force; //12 byte
         public float2 padding; //8 byte
+        public override string ToString() {
+            return $"MpmCell(mass={mass}, mass_x_velocity={mass_x_velocity}, velocity={velocity}, force={force}, padding={padding})";
+        }
+
     };
 
 
@@ -49,6 +54,7 @@ namespace MlsMpm
     public struct P2GMass {
         public float mass;
         public float3 mass_x_velocity;
+        public override string ToString() => $"P2GMass(mass={mass}, mass_x_velocity={mass_x_velocity})";
     }; 
 
 }

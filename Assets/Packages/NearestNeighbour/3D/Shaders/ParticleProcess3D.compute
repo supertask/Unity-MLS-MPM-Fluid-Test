@@ -2,7 +2,7 @@
 
 #define SIMULATION_BLOCK_SIZE 32
 
-#include "./Resources/NearestNeighbor3D.hlsl"
+#include "./Resources/NearestNeighbour3D.hlsl"
 
 StructuredBuffer<MpmParticle>	_ParticlesBufferRead;
 RWStructuredBuffer<MpmParticle> _ParticlesBufferWrite;
@@ -21,22 +21,22 @@ void Update(uint3 DTid : SV_DispatchThreadID) {
 	uint d = (uint)(_DispIdx > _NumParticles ? 0 : _DispIdx);
 	if (id == d) {
 
-		// Neighbor Search Area
-		LOOP_AROUND_NEIGHBOR(_ParticlesBufferRead[id].position){
+		// Neighbour Search Area
+		LOOP_AROUND_NEIGHBOUR(_ParticlesBufferRead[id].position){
 		
-			unsigned int G_CELL = GridKey(uint3(X, Y, Z));	// Calculate Neighbor (or own) Cell ID
+			unsigned int G_CELL = GridKey(uint3(X, Y, Z));	// Calculate NEIGHBOUR (or own) Cell ID
 
 			// inside own cell
 			if (G_CELL == GridKey(G_XYZ)) {
 
 				// fill red
-				uint2 G_START_END = _GridIndicesBufferRead[G_CELL];
+				uint2 G_START_END = _GridIndicesBuffer[G_CELL];
 				for (unsigned int N_ID = G_START_END.x; N_ID < G_START_END.y; N_ID++) {
 					//_ParticlesBufferWrite[N_ID].color = float3(1, 0, 0);
 				}
 			} else {
-				// if neighbor cell, fill blue
-				uint2 G_START_END = _GridIndicesBufferRead[G_CELL];
+				// if Neighbour cell, fill blue
+				uint2 G_START_END = _GridIndicesBuffer[G_CELL];
 				for (unsigned int N_ID = G_START_END.x; N_ID < G_START_END.y; N_ID++) {
 					//_ParticlesBufferWrite[N_ID].color = float3(0, 1, 1);
 				}

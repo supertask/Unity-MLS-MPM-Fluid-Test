@@ -9,8 +9,6 @@ using Unity.Mathematics;
 using UnityEngine.Assertions;
 
 using ComputeShaderUtil;
-using NearestNeighbor;
-
 
 namespace MlsMpm
 {
@@ -39,7 +37,6 @@ namespace MlsMpm
         public ComputeBuffer ParticlesBuffer => particlesBuffer;
         public ComputeBuffer GridBuffer => gridBuffer;
         public int NumOfCells => numOfCells;
-        public Bounds GridBounds => gridBounds;
 
         public static int MAX_EMIT_NUM = 8;
         #endregion
@@ -54,13 +51,10 @@ namespace MlsMpm
         private ComputeBuffer waitingParticleIndexesBuffer;
         private ComputeBuffer particleCountBuffer;
 
-        private GridOptimizer3D<MpmParticle> gridOptimizer;
         private P2GModel p2gModel;
 
         private int[] particleCounts;
         private int numOfCells;
-        private Bounds gridBounds;
-        private Vector3 gridCellStartPos;
         private int numOfEmitParticles;
         #endregion
 
@@ -89,7 +83,7 @@ namespace MlsMpm
         protected void OnEnable()
         {
             this.numOfCells = this.gridWidth * this.gridHeight * this.gridDepth;
-            this.p2gModel = new P2GModel(this.MaxNumOfParticles, this.p2gCS, this.p2gScatteringOptCS);
+            this.p2gModel = new P2GModel(this, this.MaxNumOfParticles, this.p2gCS, this.p2gScatteringOptCS);
             this.p2gModel.SetMediator(this);
 
             // Particles used on MPM
@@ -115,11 +109,6 @@ namespace MlsMpm
             this.particleCounts = new int[] { 0, 1, 0, 0 };
             this.particleCountBuffer.SetData(particleCounts);
 
-            // Bitonic sorter of grid
-            this.gridOptimizer = new GridOptimizer3D<MpmParticle>(
-                this.MaxNumOfParticles, this.GetGridBounds().size,
-                new Vector3(this.gridWidth, this.gridHeight, this.gridDepth)
-            );
 
             this.initParticlesKernel = new Kernel(this.particlesManagerCS, "InitParticles");
             this.emitParticlesKernel = new Kernel(this.particlesManagerCS, "EmitParticles");
@@ -137,9 +126,6 @@ namespace MlsMpm
 
         protected void Update()
         {
-            this.gridBounds = this.GetGridBounds();
-            this.gridCellStartPos = this.gridBounds.center - this.gridBounds.extents;
-
             // Particle Counter
             particleCountBuffer.SetData(this.particleCounts);
             ComputeBuffer.CopyCount(this.waitingParticleIndexesBuffer, particleCountBuffer, 0);
@@ -148,8 +134,8 @@ namespace MlsMpm
             this.ComputeEmitParticles();
             this.ComputeInitGrid();
 
-            this.p2gModel.ComputeParticlesToGridGathering();
-            //this.p2gModel.ComputeParticlesToGridScatteringOpt();
+            //this.p2gModel.ComputeParticlesToGridGathering();
+            this.p2gModel.ComputeParticlesToGridScatteringOpt();
             this.ComputeUpdateGrid();
             this.ComputeGridToParticles();
         }
@@ -166,8 +152,6 @@ namespace MlsMpm
                 (int)this.initParticlesKernel.ThreadY,
                 (int)this.initParticlesKernel.ThreadZ);
 
-            //this.DebugParticleBuffer();
-            //this.DebugParticleIndexBuffer();
         }
 
         void ComputeEmitParticles()
@@ -186,7 +170,6 @@ namespace MlsMpm
                 (int)this.emitParticlesKernel.ThreadZ);
             //Debug.Log("num: " + Mathf.CeilToInt(this.MaxNumOfParticles / (float)this.emitParticlesKernel.ThreadX) );
 
-            //this.DebugParticleBuffer();
         }
 
         /* void ComputeCopyParticles(ref ComputeBuffer inBuffer, ref ComputeBuffer outBuffer)
@@ -255,7 +238,7 @@ namespace MlsMpm
         public void SetCommonParameters(ComputeShader target)
         {
             target.SetFloat(ShaderID.DeltaTime, Time.deltaTime);
-            target.SetVector(ShaderID.CellStartPos, this.gridBounds.center - this.gridBounds.extents);
+            target.SetVector(ShaderID.CellStartPos, this.GetCellStartPos());
             target.SetFloat(ShaderID.GridSpacingH, this.gridSpacingH);
             target.SetInt(ShaderID.GridResolutionWidth, this.gridWidth);
             target.SetInt(ShaderID.GridResolutionHeight, this.gridHeight);
@@ -296,49 +279,25 @@ namespace MlsMpm
                 (int)this.gridToParticlesKernel.ThreadZ);
         }
 
-        private Bounds GetGridBounds()
+        public Bounds GetGridBounds()
         {
             return new Bounds(
                 this.transform.position,
-                this.gridSpacingH * new Vector3(this.gridWidth, this.gridHeight, this.gridDepth)
+                this.gridSpacingH * this.GetGridDimension()
             );
         }
 
-        void DebugGridBuffer()
+        public Vector3 GetGridDimension()
         {
-            //int N = this.numOfCells;
-            int N = 4;
-            MpmCell[] cells = new MpmCell[N];
-            this.gridBuffer.GetData(cells);
-            for (int i = 0; i < N; i++)
-            {
-                Debug.LogFormat("cell: i = {0}, velocity = {1}, mass x velocity = {2}: ", i, cells[i].velocity, cells[i].mass_x_velocity);
-            }
+            return new Vector3(this.gridWidth, this.gridHeight, this.gridDepth);
         }
 
-        void DebugParticleBuffer(ref ComputeBuffer buffer)
+        public Vector3 GetCellStartPos()
         {
-            int N = 4; //this.MaxNumOfParticles
-            MpmParticle[] particles = new MpmParticle[this.MaxNumOfParticles];
-            buffer.GetData(particles);
-            for (int i = 0; i < N; i++)
-            {
-                Debug.LogFormat("particle: position = {0}, type = {1}, ", particles[i].position, particles[i].type);
-            }
+            Bounds gridBounds = this.GetGridBounds();
+            return gridBounds.center - gridBounds.extents;
         }
-
-        void DebugParticleIndexBuffer()
-        {
-            //int N = this.MaxNumOfParticles;
-            int N = 3;
-            int[] particleIndexes = new int[N];
-            this.waitingParticleIndexesBuffer.GetData(particleIndexes);
-            for (int i = 0; i < N; i++)
-            {
-                Debug.Log("particle index: " + particleIndexes[i]);
-            }
-        }
-
+        
         protected void OnDisable()
         {
             this.ReleaseAll();
@@ -370,7 +329,6 @@ namespace MlsMpm
             Util.ReleaseBuffer(this.sortedParticlesBuffer);
             Util.ReleaseBuffer(this.particleCountBuffer);
 
-            this.gridOptimizer.Release();
             this.p2gModel.ReleaseAll();
         }
 

@@ -64,9 +64,11 @@ public abstract class GridOptimizerBase {
     }
 
     //public void GridSort(ref ComputeBuffer particlesBuffer) {
+    //output: gridAndMassIdsBuffer, sortedP2gMassBuffer
     public void GridSort(
-        ref ComputeBuffer particlesBuffer,
-        ref ComputeBuffer p2gGridBuffer) {
+        ref ComputeBuffer gridAndMassIdsBuffer,
+        ref ComputeBuffer p2gMassBuffer,
+        ref ComputeBuffer sortedP2gMassBuffer) {
 
         GridSortCS.SetInt("_NumParticles", numObjects);
         SetCSVariables();
@@ -80,14 +82,14 @@ public abstract class GridOptimizerBase {
         // Convert Particle position to grid index and
         // insert the grid index into a grid cell.
         kernel = GridSortCS.FindKernel("BuildGridCS");
-        GridSortCS.SetBuffer(kernel, "_ParticlesBufferRead", particlesBuffer);
+        GridSortCS.SetBuffer(kernel, "_ParticlesBufferRead", p2gMassBuffer);
         GridSortCS.SetBuffer(kernel, "_GridBufferWrite", gridBuffer);
         GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
         */
 
         /*
         MlsMpm.MpmParticle[] particleData = new MlsMpm.MpmParticle[1024];
-        particlesBuffer.GetData(particleData);
+        p2gMassBuffer.GetData(particleData);
 
         uint2[] gridData = new uint2[1024];
         gridBuffer.GetData(gridData);
@@ -106,24 +108,33 @@ public abstract class GridOptimizerBase {
         }
         */
 
+        //
         // Sort by grid index
-        bitonicSort.Sort(ref p2gGridBuffer, ref gridPingPongBuffer);
+        // output: gridAndMassIdsBuffer
+        bitonicSort.Sort(ref gridAndMassIdsBuffer, ref gridPingPongBuffer);
 
+        //
         // Build Grid Indices
+        // input: gridAndMassIdsBuffer
+        // output: gridIndicesBuffer
+        //
         kernel = GridSortCS.FindKernel("ClearGridIndicesCS");
-        GridSortCS.SetBuffer(kernel, "_GridIndicesBufferWrite", gridIndicesBuffer);
+        GridSortCS.SetBuffer(kernel, "_GridIndicesBuffer", gridIndicesBuffer);
         GridSortCS.Dispatch(kernel, (int)(numGrid / SIMULATION_BLOCK_SIZE_FOR_GRID), 1, 1);
-
         kernel = GridSortCS.FindKernel("BuildGridIndicesCS");
-        GridSortCS.SetBuffer(kernel, "_GridBufferRead", p2gGridBuffer);
-        GridSortCS.SetBuffer(kernel, "_GridIndicesBufferWrite", gridIndicesBuffer);
+        GridSortCS.SetBuffer(kernel, "_GridAndMassIdsBuffer", gridAndMassIdsBuffer);
+        GridSortCS.SetBuffer(kernel, "_GridIndicesBuffer", gridIndicesBuffer);
         GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
 
+        //
         // Rearrange
+        // input: gridAndMassIdsBuffer
+        // output: gridIndicesBuffer
+        //
         kernel = GridSortCS.FindKernel("RearrangeParticlesCS");
-        GridSortCS.SetBuffer(kernel, "_GridBufferRead", p2gGridBuffer);
-        GridSortCS.SetBuffer(kernel, "_ParticlesBufferRead", particlesBuffer);
-        GridSortCS.SetBuffer(kernel, "_ParticlesBufferWrite", sortedObjectsBufferOutput);
+        GridSortCS.SetBuffer(kernel, "_GridAndMassIdsBuffer", gridAndMassIdsBuffer);
+        GridSortCS.SetBuffer(kernel, "_P2GMassBuffer", p2gMassBuffer);
+        GridSortCS.SetBuffer(kernel, "_SortedP2GMassBuffer", sortedP2gMassBuffer);
         GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
         #endregion GridOptimization
 
@@ -131,7 +142,7 @@ public abstract class GridOptimizerBase {
         // Copy buffer
         kernel = GridSortCS.FindKernel("CopyBuffer");
         GridSortCS.SetBuffer(kernel, "_ParticlesBufferRead", sortedObjectsBufferOutput);
-        GridSortCS.SetBuffer(kernel, "_ParticlesBufferWrite", particlesBuffer);
+        GridSortCS.SetBuffer(kernel, "_ParticlesBufferWrite", p2gMassBuffer);
         GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
         */
     }

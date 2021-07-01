@@ -24,6 +24,21 @@ namespace MlsMpm {
                 idx.z * _GridResolutionWidth * _GridResolutionHeight);
         }
 
+        //
+        // Debug Compute Buffer
+        // When you define a struct/class,
+        // please use override ToString(), public override string ToString() => $"({A}, {B})";
+        //
+        public static void DebugBuffer<T>(ComputeBuffer buffer, int N) where T  : struct
+        {
+            T[] array = new T[N];
+            buffer.GetData(array);
+            for (int i = 0; i < N; i++)
+            {
+                Debug.LogFormat("index={0}: {1}", i, array[i]);
+            }
+        }
+
         public static void ReleaseBuffer(ComputeBuffer buffer)
         {
             if (buffer != null)

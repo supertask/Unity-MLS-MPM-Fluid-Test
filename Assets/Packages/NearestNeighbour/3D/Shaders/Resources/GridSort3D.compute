@@ -2,16 +2,16 @@
 #pragma kernel ClearGridIndicesCS
 #pragma kernel BuildGridIndicesCS
 #pragma kernel RearrangeParticlesCS
-#pragma kernel CopyBuffer
+//#pragma kernel CopyBuffer
 
 #define SIMULATION_BLOCK_SIZE 32
 
-#include "NearestNeighbor3D.hlsl"
+#include "NearestNeighbour3D.hlsl"
 
-StructuredBuffer<MpmParticle>	_ParticlesBufferRead;
-RWStructuredBuffer<MpmParticle>	_ParticlesBufferWrite;
+StructuredBuffer<MpmParticle>	_P2GMassBuffer;
+RWStructuredBuffer<MpmParticle>	_SortedP2GMassBuffer;
 
-StructuredBuffer  <uint2>	_GridBufferRead;
+StructuredBuffer  <uint2>	_GridAndMassIdsBuffer;
 RWStructuredBuffer<uint2>	_GridBufferWrite;
 
 int _NumParticles;
@@ -31,7 +31,7 @@ void BuildGridCS(uint3 DTid : SV_DispatchThreadID) {
 	const unsigned int P_ID = DTid.x;	// Particle ID to operate on
 
 	//おそらく, ここで非アクティブなパーティクルの扱いを定義する必要がある
-	float3 position = _ParticlesBufferRead[P_ID].position;
+	float3 position = _P2GMassBuffer[P_ID].position;
 	float3 grid_xyz = GridCalculateCell(position);
 
 	_GridBufferWrite[P_ID] = MakeKeyValuePair((uint3)grid_xyz, P_ID);
@@ -50,7 +50,7 @@ void BuildGridCS(uint3 DTid : SV_DispatchThreadID) {
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
 void ClearGridIndicesCS(uint3 DTid : SV_DispatchThreadID) {
 	// グリッドの個数分
-	_GridIndicesBufferWrite[DTid.x] = uint2(0, 0);
+	_GridIndicesBuffer[DTid.x] = uint2(0, 0);
 }
 
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
@@ -68,32 +68,33 @@ void BuildGridIndicesCS(uint3 DTid : SV_DispatchThreadID) {
 
 	// ソート済みのGrid-Particleバッファから
 	// 自分がいるグリッドを計算する
-	uint cell = GridGetKey(_GridBufferRead[P_ID]);				// ソートされたグリッドIDの取得
-	uint cell_prev = GridGetKey(_GridBufferRead[P_ID_PREV]);
-	uint cell_next = GridGetKey(_GridBufferRead[P_ID_NEXT]);
+	uint cell = GridGetKey(_GridAndMassIdsBuffer[P_ID]);				// ソートされたグリッドIDの取得
+	uint cell_prev = GridGetKey(_GridAndMassIdsBuffer[P_ID_PREV]);
+	uint cell_next = GridGetKey(_GridAndMassIdsBuffer[P_ID_NEXT]);
 
 	// 前後セルインデックスと異なる場合記録
 	if (cell != cell_prev) {
 		// 新しいセルインデックスの始まりの配列インデックス
-		_GridIndicesBufferWrite[cell].x = P_ID;
+		_GridIndicesBuffer[cell].x = P_ID;
 	}
 
 	if (cell != cell_next) {
 		// 新しいセルインデックスの終わりの配列インデックス
-		_GridIndicesBufferWrite[cell].y = P_ID + 1;
+		_GridIndicesBuffer[cell].y = P_ID + 1;
 	}
 }
 
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
 void RearrangeParticlesCS(uint3 DTid : SV_DispatchThreadID) {
-	const unsigned int id = DTid.x; // Particle ID to operate on
-	const unsigned int P_ID = GridGetValue(_GridBufferRead[id]);
-	_ParticlesBufferWrite[id] = _ParticlesBufferRead[P_ID];	// ソート済みに並び替える
+	const unsigned int laneId = DTid.x; // Particle ID to operate on
+	const unsigned int massId = GridGetValue(_GridAndMassIdsBuffer[laneId]);
+	_SortedP2GMassBuffer[laneId] = _P2GMassBuffer[massId];	// ソート済みに並び替える
 }
 
+/*
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
 void CopyBuffer(uint3 DTid : SV_DispatchThreadID) {
-	uint id = DTid.x;
-	_ParticlesBufferWrite[id] = _ParticlesBufferRead[id];
+	uint laneId = DTid.x;
+	_P2GMassBuffer[laneId] = _SortedP2GMassBuffer[laneId];
 }
-
+*/

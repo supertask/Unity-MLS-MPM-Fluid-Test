@@ -21,14 +21,14 @@ int _NumOfParticles;
 
 
 // lock-free based GPU optimazation
-// x = grid index, y = lane index(particle num * neighbor grid num). Sorted by grid index
+// x = grid index, y = lane index(particle num * neighbour grid num). Sorted by grid index
 // Used in P2GScatteringOpt
 // Used in P2GScatteringOpt
 RWStructuredBuffer<uint2> _GridAndMassIdsBuffer;
 RWStructuredBuffer<P2GMass> _P2GMassBuffer;
 
 // if _GridBufferRead'x is 0000011111122222334444,
-// _GridIndicesBufferRead will be
+// _GridIndicesBuffer will be
 // Grid cell index             0 1  2  3  4
 // Start index of grid buffer  0 5  11 16 18
 // End index of grid buffer    4 10 15 17 21
@@ -43,11 +43,11 @@ RWStructuredBuffer<uint2> _BoundaryAndIntervalBuffer;
 float _HyperElasticHardening;
 float _HyperElasticMu;
 float _HyperElasticLambda;
-RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
+StructuredBuffer<MpmParticle> _ParticlesBufferRead;
 RWStructuredBuffer<MpmCell> _GridBuffer;
 
-float _NeighborLength; //27
-RWStructuredBuffer<int> _CellNeighborBuffer; //27 array
+int _CellNeighbourLength; //27
+RWStructuredBuffer<int3> _CellNeighbourBuffer; //27 array
 
 [numthreads(THREAD_1D,1,1)]
 void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
@@ -108,23 +108,21 @@ void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 	//		for(int gz = -1; gz <=1; ++gz) {
 
 
-	//float _NumOfParticles
-	//float _NeighborLength //27
-	//RWStructuredBuffer<int> _CellNeighborBuffer; //27
-
-	for (int ni = 0; ni < _NeighborLength; ni++) {
-		int3 cellIndex3D = centerCellIndex3D + _CellNeighborBuffer[ni];
+	for (int ni = 0; ni < _CellNeighbourLength; ni++) {
+		int3 cellIndex3D = centerCellIndex3D + _CellNeighbourBuffer[ni];
 		uint cellIndex = CellIndex3DTo1D(cellIndex3D);
 
 		if (InGrid(cellIndex))
 		{
 			float3 gridPositionWS = CellIndex3DToPositionWS(cellIndex);
-			float weight = GetWeight(particle.position, _CellNeighborBuffer[ni]);
+			float weight = GetWeight(particle.position, _CellNeighbourBuffer[ni]);
 
 			P2GMass p2gMass;
 			p2gMass.mass = weight * particle.mass;
 			p2gMass.mass_x_velocity = weight * (particle.mass * particle.velocity
 				+ mul(apic, (gridPositionWS - particle.position)));
+			//p2gMass.mass = 1;
+			//p2gMass.mass_x_velocity = 1;
 
 			uint laneId = particleId + ni * _NumOfParticles;
 

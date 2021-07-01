@@ -40,8 +40,7 @@ namespace MlsMpm
             }
 
             this.material.SetFloat(ShaderID.DebugObjectSize, this.debugObjectSize);
-            this.material.SetVector(GpuMpmParticleSystem.ShaderID.CellStartPos,
-                this.mpmParticleSystem.GridBounds.center - this.mpmParticleSystem.GridBounds.extents);
+            this.material.SetVector(GpuMpmParticleSystem.ShaderID.CellStartPos, this.mpmParticleSystem.GetCellStartPos());
             this.material.SetFloat(GpuMpmParticleSystem.ShaderID.GridSpacingH, this.mpmParticleSystem.gridSpacingH);
             this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionWidth, this.mpmParticleSystem.gridWidth);
             this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionHeight, this.mpmParticleSystem.gridHeight);
