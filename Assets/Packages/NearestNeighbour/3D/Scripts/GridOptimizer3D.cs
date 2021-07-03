@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+using System.Linq;
 using System.Runtime.InteropServices;
+using Unity.Mathematics;
 
 namespace NearestNeighbour {
 
@@ -21,9 +23,18 @@ namespace NearestNeighbour {
         }
 
         protected override void InitializeBuffer() {
+            Debug.Log("numObjects: " + numObjects);
+
+            //Uint2[] gridAndMassIds = Enumerable.Range(0, this.numObjects)
+            //    .Select(_ => new Uint2(100, 200)).ToArray();
             gridBuffer = new ComputeBuffer(numObjects, Marshal.SizeOf(typeof(Uint2)));
-            gridPingPongBuffer = new ComputeBuffer(numObjects, Marshal.SizeOf(typeof(Uint2)));
-            gridIndicesBuffer = new ComputeBuffer(numGrid, Marshal.SizeOf(typeof(Uint2)));
+            //gridBuffer.SetData(gridAndMassIds);
+
+            gridPingPongBuffer = new ComputeBuffer(numObjects, Marshal.SizeOf(typeof(uint2)));
+            //gridPingPongBuffer = new ComputeBuffer(numObjects, Marshal.SizeOf(typeof(Uint2)));
+
+            gridIndicesBuffer = new ComputeBuffer(numGrid, Marshal.SizeOf(typeof(uint2)));
+            //gridIndicesBuffer = new ComputeBuffer(numGrid, Marshal.SizeOf(typeof(Uint2)));
             sortedObjectsBufferOutput = new ComputeBuffer(numObjects, Marshal.SizeOf(typeof(T)));
         }
 

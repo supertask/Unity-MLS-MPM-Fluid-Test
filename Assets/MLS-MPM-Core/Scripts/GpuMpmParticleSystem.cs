@@ -134,8 +134,9 @@ namespace MlsMpm
             this.ComputeEmitParticles();
             this.ComputeInitGrid();
 
-            //this.p2gModel.ComputeParticlesToGridGathering();
-            this.p2gModel.ComputeParticlesToGridScatteringOpt();
+            this.p2gModel.ComputeParticlesToGridGathering();
+            //this.p2gModel.ComputeParticlesToGridScatteringOpt();
+
             this.ComputeUpdateGrid();
             this.ComputeGridToParticles();
         }
@@ -297,7 +298,7 @@ namespace MlsMpm
             Bounds gridBounds = this.GetGridBounds();
             return gridBounds.center - gridBounds.extents;
         }
-        
+
         protected void OnDisable()
         {
             this.ReleaseAll();

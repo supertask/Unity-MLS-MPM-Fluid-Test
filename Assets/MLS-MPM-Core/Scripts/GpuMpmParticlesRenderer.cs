@@ -43,13 +43,6 @@ namespace MlsMpm
             this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.ParticlesBuffer, this.mpmParticleSystem.ParticlesBuffer);
             this.material.SetPass(0);
 
-            /*
-            Graphics.DrawProcedural(
-                this.material,
-                new Bounds(Vector3.zero, Vector3.one * 100f),
-                MeshTopology.Points,
-                this.mpmParticleSystem.MaxNumOfParticles);
-            */
             Graphics.DrawProceduralNow(MeshTopology.Points, this.mpmParticleSystem.MaxNumOfParticles);
         }
     }

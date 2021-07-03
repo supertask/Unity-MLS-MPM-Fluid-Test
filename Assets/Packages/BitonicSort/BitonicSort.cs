@@ -1,16 +1,14 @@
 ﻿using System;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace Sorting.BitonicSort
 {
 
     public class BitonicSort
     {
-
-        //protected static readonly uint BITONIC_BLOCK_SIZE = 512;
-        //protected static readonly uint TRANSPOSE_BLOCK_SIZE = 16;
-        protected static readonly uint BITONIC_BLOCK_SIZE = 256;
-        protected static readonly uint TRANSPOSE_BLOCK_SIZE = 4;
+        protected static readonly uint BITONIC_BLOCK_SIZE = 512;
+        protected static readonly uint TRANSPOSE_BLOCK_SIZE = 16;
 
         protected ComputeShader BitonicCS;
 
@@ -61,6 +59,9 @@ namespace Sorting.BitonicSort
                 sortCS.SetBuffer(KERNEL_ID_TRANSPOSE, "Data", tempBuffer);
                 sortCS.Dispatch(KERNEL_ID_TRANSPOSE, (int)(MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE), (int)(MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE), 1);
 
+                //MlsMpm.Util.DebugBuffer<uint2>(tempBuffer, 1024, 1024+3);
+                //MlsMpm.Util.DebugBuffer<uint2>(inBuffer, 1024, 1024+3);
+
                 // Sort the transposed column data
                 sortCS.SetBuffer(KERNEL_ID_BITONICSORT, "Data", tempBuffer);
                 sortCS.Dispatch(KERNEL_ID_BITONICSORT, (int)(NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
@@ -75,6 +76,7 @@ namespace Sorting.BitonicSort
                 sortCS.SetBuffer(KERNEL_ID_BITONICSORT, "Data", inBuffer);
                 sortCS.Dispatch(KERNEL_ID_BITONICSORT, (int)(NUM_ELEMENTS / BITONIC_BLOCK_SIZE), 1, 1);
             }
+
         }
 
         void SetGPUSortConstants(ComputeShader cs, uint level, uint levelMask, uint width, uint height)

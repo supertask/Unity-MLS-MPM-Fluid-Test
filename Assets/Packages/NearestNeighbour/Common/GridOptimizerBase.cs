@@ -2,6 +2,7 @@
 using Unity.Mathematics;
 
 using Sorting.BitonicSort;
+using MlsMpm;
 
 public abstract class GridOptimizerBase {
 
@@ -66,9 +67,10 @@ public abstract class GridOptimizerBase {
     //public void GridSort(ref ComputeBuffer particlesBuffer) {
     //output: gridAndMassIdsBuffer, sortedP2gMassBuffer
     public void GridSort(
-        ref ComputeBuffer gridAndMassIdsBuffer,
-        ref ComputeBuffer p2gMassBuffer,
-        ref ComputeBuffer sortedP2gMassBuffer) {
+        ComputeBuffer gridAndMassIdsBuffer,
+        ComputeBuffer gridPingPongBuffer2,
+        ComputeBuffer p2gMassBuffer,
+        ComputeBuffer sortedP2gMassBuffer) {
 
         GridSortCS.SetInt("_NumParticles", numObjects);
         SetCSVariables();
@@ -108,10 +110,18 @@ public abstract class GridOptimizerBase {
         }
         */
 
+        int startIndex = 1024*4+300;
+        //Util.DebugBuffer<uint2>(gridAndMassIdsBuffer, startIndex, startIndex+5);
+        //Debug.Log("-----");
+
         //
         // Sort by grid index
         // output: gridAndMassIdsBuffer
         bitonicSort.Sort(ref gridAndMassIdsBuffer, ref gridPingPongBuffer);
+
+        //startIndex = 1024*20;
+        //Util.DebugBuffer<uint2>(gridAndMassIdsBuffer, startIndex, startIndex+5);
+        //Debug.Log("==========");
 
         //
         // Build Grid Indices
@@ -145,6 +155,8 @@ public abstract class GridOptimizerBase {
         GridSortCS.SetBuffer(kernel, "_ParticlesBufferWrite", p2gMassBuffer);
         GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
         */
+
+        //Util.DebugBuffer<uint2>(gridAndMassIdsBuffer, startIndex, startIndex+3);
     }
 
     #region GPUSort

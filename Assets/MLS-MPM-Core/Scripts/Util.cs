@@ -29,15 +29,39 @@ namespace MlsMpm {
         // When you define a struct/class,
         // please use override ToString(), public override string ToString() => $"({A}, {B})";
         //
-        public static void DebugBuffer<T>(ComputeBuffer buffer, int N) where T  : struct
+        // debugging range is startIndex <= x < endIndex
+        // example: 
+        //    Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 1024, 1027); 
+        //
+        public static void DebugBuffer<T>(ComputeBuffer buffer, int startIndex, int endIndex) where T  : struct
         {
+            int N = endIndex - startIndex;
             T[] array = new T[N];
-            buffer.GetData(array);
+            buffer.GetData(array, 0, startIndex, N);
             for (int i = 0; i < N; i++)
             {
-                Debug.LogFormat("index={0}: {1}", i, array[i]);
+                Debug.LogFormat("index={0}: {1}", startIndex + i, array[i]);
             }
         }
+
+
+        /*
+        // Mathf.NextPowerOfTwo
+        //
+        // Find the smallest power of two more than any number
+        // example:
+        //     n = 10
+        //     Mathf.Log(n, 2) -> 3.3219
+        //     Mathf.CeilToInt(3.3219) -> 4
+        //     Mathf.Pow(2, 4) -> 16
+        //     return 16
+        //
+        public static int NextPowerOfTwo(int n) {
+            if (n <= 0) { return 0; }
+            int k = Mathf.CeilToInt(Mathf.Log(n, 2));
+            return Mathf.Pow(2, k);
+        }
+        */
 
         public static void ReleaseBuffer(ComputeBuffer buffer)
         {
