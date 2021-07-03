@@ -245,7 +245,7 @@ namespace MlsMpm
         public void GatherAndWriteP2G()
         {
             //たぶんここはバグってる
-            this.p2gScatteringOptCS.SetBuffer(this.boundaryAndIntervalKernel.Index,
+            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.GridIndicesBuffer, this.gridOptimizer.GetGridIndicesBuffer());
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.GridAndMassIdsBuffer, this.gridAndMassIdsBuffer);

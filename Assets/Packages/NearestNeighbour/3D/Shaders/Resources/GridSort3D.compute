@@ -4,7 +4,7 @@
 #pragma kernel RearrangeParticlesCS
 //#pragma kernel CopyBuffer
 
-#define SIMULATION_BLOCK_SIZE 32
+#define SIMULATION_BLOCK_SIZE 256
 
 #include "NearestNeighbour3D.hlsl"
 

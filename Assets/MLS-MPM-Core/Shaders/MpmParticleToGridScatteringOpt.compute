@@ -185,8 +185,9 @@ void BoundaryAndInterval(uint3 DTid : SV_DispatchThreadID)
 }
 
 
-groupshared float blockMass[512];
-groupshared float3 blockMassXVelocity[512];
+groupshared P2GMass blockP2gMass[THREAD_1D];
+//groupshared float blockMass[128];
+//groupshared float3 blockMassXVelocity[128];
 
 //void GatherAndWrite(
 //	uint3 Gid  : SV_GroupID,
@@ -197,31 +198,34 @@ groupshared float3 blockMassXVelocity[512];
 [numthreads(THREAD_1D,1,1)]
 void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 {
+	//
+	// Bug memo: GatherAndWriteでバグっているのは，ほぼ間違いない，
+	// GridIndicesBufferあたりでバグっているか?, そもそも_BoundaryAndIntervalBufferで計算ミスしてる?
+	// ま，でもbitonic sortで空の値で埋めているところは消した方がいいよなーとは思う．
+	//
 	const uint laneId = DTid.x;
 	uint2 cellAndMassId = _GridAndMassIdsBuffer[laneId];
 	uint cellIndex  = cellAndMassId.x;
-	uint massIndex  = cellAndMassId.x;
-	uint2 startAndEndIndices = _GridIndicesBuffer[cellIndex];
-	uint startLaneId = startAndEndIndices.x;
-	uint endLaneId = startAndEndIndices.y;
+	uint massIndex  = cellAndMassId.y;
+	//uint2 startAndEndIndices = _GridIndicesBuffer[cellIndex];
+	//uint startLaneId = startAndEndIndices.x;
+	//uint endLaneId = startAndEndIndices.y;
 
 	uint2 boundaryAndInterval = _BoundaryAndIntervalBuffer[laneId];
 	uint boundary = boundaryAndInterval.x;
 	uint regionInterval = boundaryAndInterval.y;
-	uint particleId = _GridAndMassIdsBuffer[startLaneId].y;
 
 	// Store each particle info of 256 threads
 	P2GMass p2gMass = _P2GMassBuffer[massIndex];
-	blockMass[GI] = p2gMass.mass;
-	blockMassXVelocity[GI] = p2gMass.mass_x_velocity; //仮
+	blockP2gMass[GI] = p2gMass;
 	GroupMemoryBarrierWithGroupSync();
-	for(uint stride = 1; stride < 256; stride <<= 1)
+	for(uint stride = 1; stride < THREAD_1D / 2; stride <<= 1)
 	{
 		if (stride <= regionInterval) {
 			// stride <= interval
 			// only sum within the group(same grid index)
-			blockMass[GI] += blockMass[GI+stride];
-			blockMassXVelocity[GI] += blockMassXVelocity[GI+stride];
+			blockP2gMass[GI].mass += blockP2gMass[GI+stride].mass;
+			blockP2gMass[GI].mass_x_velocity += blockP2gMass[GI+stride].mass_x_velocity;
 		}
 		GroupMemoryBarrierWithGroupSync();
 	}
@@ -230,8 +234,10 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	if (boundaryAndInterval.x)
 	{
 		MpmCell cell = _GridBuffer[cellIndex];
-		cell.mass = blockMass[GI];
-		cell.mass_x_velocity = blockMassXVelocity[GI];
+		cell.mass = blockP2gMass[GI].mass;
+		cell.mass_x_velocity = blockP2gMass[GI].mass_x_velocity;
+		//cell.mass = blockMass[GI];
+		//cell.mass_x_velocity = blockMassXVelocity[GI];
 		_GridBuffer[cellIndex] = cell; //AtomicAdd is applied
 	}
 }

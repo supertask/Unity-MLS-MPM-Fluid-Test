@@ -17,7 +17,7 @@ public abstract class GridOptimizerBase {
 
 
     protected ComputeShader GridSortCS;
-    protected static readonly int SIMULATION_BLOCK_SIZE_FOR_GRID = 32;
+    protected static readonly int SIMULATION_BLOCK_SIZE_FOR_GRID = 256;
     
 
     protected int threadGroupSize;
@@ -27,8 +27,9 @@ public abstract class GridOptimizerBase {
 
     public GridOptimizerBase(int numObjects) {
         this.numObjects = numObjects;
+        Debug.Log(numObjects);
 
-        this.threadGroupSize = numObjects / SIMULATION_BLOCK_SIZE_FOR_GRID;
+        this.threadGroupSize = Mathf.CeilToInt(numObjects / SIMULATION_BLOCK_SIZE_FOR_GRID);
 
         this.bitonicSort = new BitonicSort(numObjects);
     }
@@ -110,7 +111,7 @@ public abstract class GridOptimizerBase {
         }
         */
 
-        int startIndex = 1024*4+300;
+        //int startIndex = 1024*4+300;
         //Util.DebugBuffer<uint2>(gridAndMassIdsBuffer, startIndex, startIndex+5);
         //Debug.Log("-----");
 
