@@ -109,7 +109,6 @@ namespace MlsMpm
             this.particleCounts = new int[] { 0, 1, 0, 0 };
             this.particleCountBuffer.SetData(particleCounts);
 
-
             this.initParticlesKernel = new Kernel(this.particlesManagerCS, "InitParticles");
             this.emitParticlesKernel = new Kernel(this.particlesManagerCS, "EmitParticles");
             this.copyParticlesKernel = new Kernel(this.particlesManagerCS, "CopyParticles");
@@ -130,12 +129,14 @@ namespace MlsMpm
             particleCountBuffer.SetData(this.particleCounts);
             ComputeBuffer.CopyCount(this.waitingParticleIndexesBuffer, particleCountBuffer, 0);
             particleCountBuffer.GetData(this.particleCounts);
+            //Debug.LogFormat("particle count: {0}, {1}, {2}, {3} ", this.particleCounts[0], this.particleCounts[1], this.particleCounts[2], this.particleCounts[3]);
 
             this.ComputeEmitParticles();
             this.ComputeInitGrid();
 
-            //this.p2gModel.ComputeParticlesToGridGathering();
-            this.p2gModel.ComputeParticlesToGridScatteringOpt();
+            this.p2gModel.ComputeParticlesToGridGathering();
+            //this.p2gModel.ComputeParticlesToGridScatteringOpt();
+
 
             this.ComputeUpdateGrid();
             this.ComputeGridToParticles();

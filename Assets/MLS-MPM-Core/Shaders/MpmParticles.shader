@@ -54,7 +54,8 @@
 		//o.position = random(float2(id, 0));
 		//o.color = random(float2(id, 0));
 		o.color = 1;
-		o.size = particle.type > 0 ? _ParticleSize : 0;
+		//o.size = particle.type > 0 ? _ParticleSize : 0;
+		o.size = _ParticleSize;
 		return o;
 	}
 

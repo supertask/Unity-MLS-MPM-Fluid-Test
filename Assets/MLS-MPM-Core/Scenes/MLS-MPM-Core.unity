@@ -412,7 +412,7 @@ PrefabInstance:
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: MaxNumOfParticles
-      value: 8192
+      value: 1024
       objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}

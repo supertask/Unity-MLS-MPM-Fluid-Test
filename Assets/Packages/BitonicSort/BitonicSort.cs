@@ -1,16 +1,20 @@
 ﻿using System;
 using UnityEngine;
 using Unity.Mathematics;
+using ComputeShaderUtil;
 
 namespace Sorting.BitonicSort
 {
 
     public class BitonicSort
     {
-        protected static readonly uint BITONIC_BLOCK_SIZE = 512;
-        protected static readonly uint TRANSPOSE_BLOCK_SIZE = 16;
+        //protected static readonly uint BITONIC_BLOCK_SIZE = 512;
+        //protected static readonly uint TRANSPOSE_BLOCK_SIZE = 16;
+        protected uint BITONIC_BLOCK_SIZE;
+        protected uint TRANSPOSE_BLOCK_SIZE;
 
         protected ComputeShader BitonicCS;
+        private Kernel bitonicSortKernel, matrixTransposeKernel;
 
         int numElements;
 
@@ -18,6 +22,11 @@ namespace Sorting.BitonicSort
         {
             this.BitonicCS = (ComputeShader)Resources.Load("BitonicSortCS");
             this.SetNumElements(numElements);
+            this.bitonicSortKernel = new Kernel(this.BitonicCS, "BitonicSort");
+            this.matrixTransposeKernel = new Kernel(this.BitonicCS, "MatrixTranspose");
+            this.BITONIC_BLOCK_SIZE = this.bitonicSortKernel.ThreadX;
+            this.TRANSPOSE_BLOCK_SIZE = this.matrixTransposeKernel.ThreadX;
+            Debug.LogFormat("BITONIC_BLOCK_SIZE = {0}, TRANSPOSE_BLOCK_SIZE = {1}", BITONIC_BLOCK_SIZE, TRANSPOSE_BLOCK_SIZE);
         }
 
         public void SetNumElements(int numElements) {
@@ -32,8 +41,10 @@ namespace Sorting.BitonicSort
         {
             ComputeShader sortCS = BitonicCS;
 
-            int KERNEL_ID_BITONICSORT = sortCS.FindKernel("BitonicSort");
-            int KERNEL_ID_TRANSPOSE = sortCS.FindKernel("MatrixTranspose");
+            //int KERNEL_ID_BITONICSORT = sortCS.FindKernel("BitonicSort");
+            //int KERNEL_ID_TRANSPOSE = sortCS.FindKernel("MatrixTranspose");
+            int KERNEL_ID_BITONICSORT = this.bitonicSortKernel.Index;
+            int KERNEL_ID_TRANSPOSE = this.matrixTransposeKernel.Index;
 
             uint NUM_ELEMENTS = (uint)numElements;
             uint MATRIX_WIDTH = BITONIC_BLOCK_SIZE;

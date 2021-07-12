@@ -15,7 +15,8 @@
 #include "./Grid.hlsl"
 #include "./SVD.hlsl"
 
-#define THREAD_1D 256
+//#define THREAD_1D 256
+#define THREAD_1D 64
 
 float _DeltaTime;
 int _NumOfParticles;
@@ -199,9 +200,14 @@ groupshared P2GMass blockP2gMass[THREAD_1D];
 void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 {
 	//
-	// Bug memo: GatherAndWriteでバグっているのは，ほぼ間違いない，
+	// Bug memo:
+	// GatherAndWriteでバグっているのは，ほぼ間違いない，
 	// GridIndicesBufferあたりでバグっているか?, そもそも_BoundaryAndIntervalBufferで計算ミスしてる?
 	// ま，でもbitonic sortで空の値で埋めているところは消した方がいいよなーとは思う．
+	//
+	// そのた
+	// 表示されないパーティクルを表示させる. 
+	// GatherAndWriteでの計算の不要な空パーティクルをはじく
 	//
 	const uint laneId = DTid.x;
 	uint2 cellAndMassId = _GridAndMassIdsBuffer[laneId];
@@ -219,7 +225,7 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	P2GMass p2gMass = _P2GMassBuffer[massIndex];
 	blockP2gMass[GI] = p2gMass;
 	GroupMemoryBarrierWithGroupSync();
-	for(uint stride = 1; stride < THREAD_1D / 2; stride <<= 1)
+	for(uint stride = 1; stride < THREAD_1D; stride <<= 1)
 	{
 		if (stride <= regionInterval) {
 			// stride <= interval

@@ -191,6 +191,24 @@ namespace MlsMpm
 
             // 4. Calc parallel reduction sum and insert into grid
             this.GatherAndWriteP2G();
+
+
+            if (Input.GetKeyDown(KeyCode.Space)) {
+                //index=0: uint2(0, 5357)
+                // 0 ~ 5357個も空の状態がある <- 予想通り
+                Util.DebugBuffer<uint2>(this.gridOptimizer.GetGridIndicesBuffer(), 0, 30);
+                Debug.Log("---");
+
+                Util.DebugBuffer<MpmCell>(this.mediator.GridBuffer, 0, 30);
+                Debug.Log("---");
+
+                Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 0, numOfP2GMasses);
+                Debug.Log("---");
+                Util.DebugBuffer<uint2>(this.boundaryAndIntervalBuffer, 0, numOfP2GMasses);
+                Debug.Log("---");
+                Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, 0, numOfP2GMasses);
+                Debug.Log("=========");
+            }
         }
 
         public void ClearBuffers()
