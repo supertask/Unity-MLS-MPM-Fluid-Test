@@ -2,6 +2,7 @@
 {
 	CGINCLUDE
 	#include "UnityCG.cginc"
+	#include "Constant.hlsl"
 	#include "MpmStruct.hlsl"
 	#include "Grid.hlsl"
 
@@ -22,7 +23,8 @@
 	float4    _MainTex_ST;
 	float     _DebugObjectSize;
 
-	StructuredBuffer<MpmCell> _GridBuffer;
+	//StructuredBuffer<MpmCell> _GridBuffer;
+	StructuredBuffer<LockMpmCell> _GridBuffer;
 	/*
 	int     _GridResolutionWidth;
 	int     _GridResolutionHeight;
@@ -61,12 +63,16 @@
 		v2g o = (v2g)0;
 		int3 cellIndex3D = CellIndex1DTo3D(cellIndex);
 		float3 cellPositionWS = CellIndex3DToPositionWS(cellIndex3D);
-		MpmCell cell = _GridBuffer[cellIndex];
+		//MpmCell cell = _GridBuffer[cellIndex];
+		//float mass = cell.mass;
+		LockMpmCell cell = _GridBuffer[cellIndex];
+		float mass = cell.mass / FLOAT_TO_INT_DIGIT;
+
 		o.position = cellPositionWS;
 		//o.color = random(float2(id, 0));
-		o.color = cell.mass > 0 ? float4(1,0,0,1) : float4(1,1,1,1);
-		//o.size = cell.mass > 0 ? cell.mass * _DebugObjectSize : _DebugObjectSize;
-		o.size = cell.mass * _DebugObjectSize;
+		o.color = mass > 0 ? float4(1,0,0,1) : float4(1,1,1,1);
+		//o.size = mass > 0 ? mass * _DebugObjectSize : _DebugObjectSize;
+		o.size = mass * _DebugObjectSize;
 		return o;
 	}
 
