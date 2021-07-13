@@ -200,8 +200,8 @@ void BoundaryAndInterval(
 	// cellId != prevCellId: if cell ids are different, it is boundary point
 	// GI == 0: boundary of group shared
 	//
-	uint boundary = (laneId == 0 || cellId != prevCellId
-		|| GI == 0) ? 1 : 0;
+	//uint boundary = (laneId == 0 || cellId != prevCellId || GI == 0) ? 1 : 0;
+	uint boundary = (laneId == 0 || cellId != prevCellId) ? 1 : 0;
 
 	uint laneIdEnd = _GridIndicesBuffer[cellId].y;
 
@@ -212,11 +212,11 @@ void BoundaryAndInterval(
 	// the end is _GridIndicesBuffer[cellId].y.
 	// else, the end is group shared boundary point
 	//
-	//uint regionInterval = laneIdEnd - 1 - laneId;
-	laneIdEnd = (laneIdEnd < (groupId.x + 1) * THREAD_1D)
-		? laneIdEnd
-		: (groupId.x + 1) * THREAD_1D;
 	uint regionInterval = laneIdEnd - 1 - laneId;
+	//laneIdEnd = (laneIdEnd < (groupId.x + 1) * THREAD_1D)
+	//	? laneIdEnd
+	//	: (groupId.x + 1) * THREAD_1D;
+	//uint regionInterval = laneIdEnd - 1 - laneId;
 
 	_BoundaryAndIntervalBuffer[laneId] = uint2(boundary, regionInterval);
 }
@@ -273,13 +273,14 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	}
 
 	// Only the boundary node (Leader node) needs to write
-	if (boundaryAndInterval.x)
+	if (boundary)
 	{
-		//MpmCell cell = _GridBuffer[cellIndex];
-		//cell.mass = blockP2gMass[GI].mass;
-		//cell.mass_x_velocity = blockP2gMass[GI].mass_x_velocity;
-		//_GridBuffer[cellIndex] = cell; //AtomicAdd is applied
+		LockMpmCell cell = _GridBuffer[cellIndex];
+		cell.mass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
+		cell.mass_x_velocity = (int) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
+		_GridBuffer[cellIndex] = cell; //AtomicAdd is applied
 
+		/*
 		int intMass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
 		//int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
 		int intMassXVelocityX = (int) (blockP2gMass[GI].mass_x_velocity.x * FLOAT_TO_INT_DIGIT);
@@ -289,5 +290,6 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.x, intMassXVelocityX);
 		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.y, intMassXVelocityY);
 		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.z, intMassXVelocityZ);
+		*/
 	}
 }

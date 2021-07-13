@@ -403,16 +403,21 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 522039639, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 522039640, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: SphereRadius
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: MaxNumOfParticles
-      value: 1024
+      value: 128
       objectReference: {fileID: 0}
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}

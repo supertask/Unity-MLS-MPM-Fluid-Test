@@ -23,8 +23,16 @@
 	float4    _MainTex_ST;
 	float     _DebugObjectSize;
 
+
+	#if defined(__LockGathering) || defined(__LockFreeGathering)
+		StructuredBuffer<LockMpmCell> _GridBuffer;
+	#else
+		StructuredBuffer<MpmCell> _GridBuffer;
+	#endif
+	
 	//StructuredBuffer<MpmCell> _GridBuffer;
-	StructuredBuffer<LockMpmCell> _GridBuffer;
+	//StructuredBuffer<LockMpmCell> _GridBuffer;
+
 	/*
 	int     _GridResolutionWidth;
 	int     _GridResolutionHeight;
@@ -65,8 +73,20 @@
 		float3 cellPositionWS = CellIndex3DToPositionWS(cellIndex3D);
 		//MpmCell cell = _GridBuffer[cellIndex];
 		//float mass = cell.mass;
-		LockMpmCell cell = _GridBuffer[cellIndex];
-		float mass = cell.mass / FLOAT_TO_INT_DIGIT;
+		//LockMpmCell cell = _GridBuffer[cellIndex];
+
+		#if defined(__LockGathering) || defined(__LockFreeGathering)
+			//LockMpmCell cell = _GridBuffer[cellIndex];
+			//float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
+			float mass = (float)cell.mass;
+		#else
+			MpmCell cell = _GridBuffer[cellIndex];
+			float mass = cell.mass;
+		#endif
+
+		//LockMpmCell cell = _GridBuffer[cellIndex];
+		//float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
+
 
 		o.position = cellPositionWS;
 		//o.color = random(float2(id, 0));

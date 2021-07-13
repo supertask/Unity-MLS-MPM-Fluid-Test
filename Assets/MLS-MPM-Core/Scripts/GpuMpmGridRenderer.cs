@@ -10,7 +10,7 @@ namespace MlsMpm
     {
         [SerializeField] public Material material;
         [SerializeField] public float debugObjectSize = 0.01f;
-        GpuMpmParticleSystem mpmParticleSystem;
+        private GpuMpmParticleSystem mediator;
 
         public static class ShaderID
         {
@@ -19,7 +19,7 @@ namespace MlsMpm
         }
         void Start()
         {
-            this.mpmParticleSystem = this.GetComponent<GpuMpmParticleSystem>();
+            this.mediator = this.GetComponent<GpuMpmParticleSystem>();
         }
 
 
@@ -39,15 +39,35 @@ namespace MlsMpm
                 inverseViewMatrix = Camera.main.worldToCameraMatrix.inverse;
             }
 
+
+            if (this.mediator.implementationType == ImplementationType.Gathering)
+            {
+                this.material.EnableKeyword(GpuMpmParticleSystem.ShaderKeyword.Gathering);
+                this.material.DisableKeyword(GpuMpmParticleSystem.ShaderKeyword.LockScattering);
+                this.material.DisableKeyword(GpuMpmParticleSystem.ShaderKeyword.LockFreeScattering);
+            }
+            else if (this.mediator.implementationType == ImplementationType.LockScattering)
+            {
+                this.material.DisableKeyword(GpuMpmParticleSystem.ShaderKeyword.Gathering);
+                this.material.EnableKeyword(GpuMpmParticleSystem.ShaderKeyword.LockScattering);
+                this.material.DisableKeyword(GpuMpmParticleSystem.ShaderKeyword.LockFreeScattering);
+            }
+            else if (this.mediator.implementationType == ImplementationType.LockFreeScattering)
+            {
+                this.material.DisableKeyword(GpuMpmParticleSystem.ShaderKeyword.Gathering);
+                this.material.DisableKeyword(GpuMpmParticleSystem.ShaderKeyword.LockScattering);
+                this.material.EnableKeyword(GpuMpmParticleSystem.ShaderKeyword.LockFreeScattering);
+            }
+
             this.material.SetFloat(ShaderID.DebugObjectSize, this.debugObjectSize);
-            this.material.SetVector(GpuMpmParticleSystem.ShaderID.CellStartPos, this.mpmParticleSystem.GetCellStartPos());
-            this.material.SetFloat(GpuMpmParticleSystem.ShaderID.GridSpacingH, this.mpmParticleSystem.gridSpacingH);
-            this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionWidth, this.mpmParticleSystem.gridWidth);
-            this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionHeight, this.mpmParticleSystem.gridHeight);
-            this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionDepth, this.mpmParticleSystem.gridDepth);
+            this.material.SetVector(GpuMpmParticleSystem.ShaderID.CellStartPos, this.mediator.GetCellStartPos());
+            this.material.SetFloat(GpuMpmParticleSystem.ShaderID.GridSpacingH, this.mediator.gridSpacingH);
+            this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionWidth, this.mediator.gridWidth);
+            this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionHeight, this.mediator.gridHeight);
+            this.material.SetInt(GpuMpmParticleSystem.ShaderID.GridResolutionDepth, this.mediator.gridDepth);
 
             this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
-            this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.GridBuffer, this.mpmParticleSystem.GridBuffer);
+            this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.GridBuffer, this.mediator.GridBuffer);
             this.material.SetPass(0);
 
             /*
@@ -55,9 +75,9 @@ namespace MlsMpm
                 this.material,
                 new Bounds(Vector3.zero, Vector3.one * 100f),
                 MeshTopology.Points,
-                this.mpmParticleSystem.MaxNumOfParticles);
+                this.mediator.MaxNumOfParticles);
             */
-            Graphics.DrawProceduralNow(MeshTopology.Points, this.mpmParticleSystem.NumOfCells);
+            Graphics.DrawProceduralNow(MeshTopology.Points, this.mediator.NumOfCells);
         }
     }
 }

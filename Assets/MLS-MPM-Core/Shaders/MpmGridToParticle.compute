@@ -10,8 +10,13 @@
 float _DeltaTime;
 
 RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
-//RWStructuredBuffer<MpmCell> _GridBuffer;
-RWStructuredBuffer<LockMpmCell> _GridBuffer;
+
+
+#if defined(__LockGathering) || defined(__LockFreeGathering)
+	RWStructuredBuffer<LockMpmCell> _GridBuffer;
+#else
+	RWStructuredBuffer<MpmCell> _GridBuffer;
+#endif
 
 [numthreads(THREAD_1D, 1, 1)]
 void GridToParticle(uint3 DTid : SV_DispatchThreadID)

@@ -89,7 +89,7 @@ void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 					float weight = GetWeight(particle.position, int3(gx,gy,gz));
 
 					//ここでロックする
-					MpmCell cell = _GridBuffer[cellIndex];
+					LockMpmCell cell = _GridBuffer[cellIndex];
 					cell.mass += weight * particle.mass;
 					cell.mass_x_velocity += weight * (particle.mass * particle.velocity
 						+ mul(apic, (gridPositionWS - particle.position)));

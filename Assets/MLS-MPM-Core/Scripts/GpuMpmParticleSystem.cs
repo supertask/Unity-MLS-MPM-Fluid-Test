@@ -60,6 +60,12 @@ namespace MlsMpm
         #endregion
 
         #region Shader property IDs
+        public static class ShaderKeyword
+        {
+            public static string Gathering = "__Gathering";
+            public static string LockScattering = "__LockScattering";
+            public static string LockFreeScattering = "__LockFreeScattering";
+        }
         public static class ShaderID
         {
             public static int GridSpacingH = Shader.PropertyToID("_GridSpacingH");
@@ -260,6 +266,29 @@ namespace MlsMpm
 
         public void SetCommonParameters(ComputeShader target)
         {
+
+            if (this.implementationType == ImplementationType.Gathering)
+            {
+                target.EnableKeyword(ShaderKeyword.Gathering);
+                target.DisableKeyword(ShaderKeyword.LockScattering);
+                target.DisableKeyword(ShaderKeyword.LockFreeScattering);
+            }
+            else if (this.implementationType == ImplementationType.LockScattering)
+            {
+                target.DisableKeyword(ShaderKeyword.Gathering);
+                target.EnableKeyword(ShaderKeyword.LockScattering);
+                target.DisableKeyword(ShaderKeyword.LockFreeScattering);
+            }
+            else if (this.implementationType == ImplementationType.LockFreeScattering)
+            {
+                target.DisableKeyword(ShaderKeyword.Gathering);
+                target.DisableKeyword(ShaderKeyword.LockScattering);
+                target.EnableKeyword(ShaderKeyword.LockFreeScattering);
+                //Debug.LogFormat("Gathering={0}, LockFreeScattering={1}",
+                //    target.IsKeywordEnabled(ShaderKeyword.Gathering),
+                //    target.IsKeywordEnabled(ShaderKeyword.LockFreeScattering) );
+
+            }
             target.SetFloat(ShaderID.DeltaTime, Time.deltaTime);
             target.SetVector(ShaderID.CellStartPos, this.GetCellStartPos());
             target.SetFloat(ShaderID.GridSpacingH, this.gridSpacingH);

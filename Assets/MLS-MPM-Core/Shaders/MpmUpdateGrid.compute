@@ -9,17 +9,24 @@
 
 float _DeltaTime;
 
-//RWStructuredBuffer<MpmCell> _GridBuffer;
-RWStructuredBuffer<LockMpmCell> _GridBuffer;
+#if defined(__LockGathering) || defined(__LockFreeGathering)
+    RWStructuredBuffer<LockMpmCell> _GridBuffer;
+#else
+    RWStructuredBuffer<MpmCell> _GridBuffer;
+#endif
 
 [numthreads(THREAD_1D,1,1)]
 void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
 {
-	const uint cid = DTid.x;
-    //MpmCell cell = _GridBuffer[cid];
-    LockMpmCell cell = _GridBuffer[cid];
+	const uint idx = DTid.x;
 
-	uint3 cidx = CellIndex1DTo3D(cid);
+	#if defined(__LockGathering) || defined(__LockFreeGathering)
+		LockMpmCell cell = _GridBuffer[idx];
+	#else
+		MpmCell cell = _GridBuffer[idx];
+	#endif
+
+	uint3 cidx = CellIndex1DTo3D(idx);
 
     if (cell.mass <= 0)
     {
@@ -30,11 +37,16 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
     }
     else
     {
-        //float mass = cell.mass;
-        //float mass_x_velocity = cell.mass_x_velocity;
 
-        float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT;
-        float mass_x_velocity = ((float)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT;
+        #if defined(__LockGathering) || defined(__LockFreeGathering)
+            //float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT;
+            //float3 mass_x_velocity = ((float)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT;
+            float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
+            float3 mass_x_velocity = ((float)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT;
+        #else
+            float mass = cell.mass;
+            float3 mass_x_velocity = cell.mass_x_velocity;
+        #endif
 
         cell.velocity = mass_x_velocity / mass;
 
@@ -45,5 +57,5 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
         if (cidx.z < 2 || cidx.z >= _GridResolutionDepth - 2) cell.velocity.z = 0;
     }
 
-    _GridBuffer[cid] = cell;
+    _GridBuffer[idx] = cell;
 }

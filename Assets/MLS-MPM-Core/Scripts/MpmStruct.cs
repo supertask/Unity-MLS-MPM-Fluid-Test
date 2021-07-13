@@ -57,7 +57,7 @@ namespace MlsMpm
         public float2 padding;
 
         public override string ToString() {
-            return $"MpmCell(mass={mass}, mass_x_velocity={mass_x_velocity}, velocity={velocity}, force={force}, padding={padding})";
+            return $"LockMpmCell(mass={mass}, mass_x_velocity={mass_x_velocity}, velocity={velocity}, force={force}, padding={padding})";
         }
     };
 
