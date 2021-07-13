@@ -6,6 +6,13 @@ using Unity.Mathematics;
 
 namespace MlsMpm
 {
+    public enum ImplementationType
+    {
+        Gathering = 0,
+        LockScattering,
+        LockFreeScattering,
+    }
+
     public struct MpmParticle
     {
         public enum Type
@@ -33,6 +40,7 @@ namespace MlsMpm
         public float3 velocity; //12 byte
         public float3 force; //12 byte
         public float2 padding; //8 byte
+
         public override string ToString() {
             return $"MpmCell(mass={mass}, mass_x_velocity={mass_x_velocity}, velocity={velocity}, force={force}, padding={padding})";
         }
@@ -40,13 +48,17 @@ namespace MlsMpm
 
 
     // Mpm Cell for interlocked add
-    public struct MpmCellInterlocked
+    public struct LockMpmCell
     {
         public int mass;
         public int3 mass_x_velocity;
         public float3 velocity;
         public float3 force;
         public float2 padding;
+
+        public override string ToString() {
+            return $"MpmCell(mass={mass}, mass_x_velocity={mass_x_velocity}, velocity={velocity}, force={force}, padding={padding})";
+        }
     };
 
     //For lock-free based GPU Optimization

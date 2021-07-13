@@ -17,7 +17,8 @@ float _HyperElasticMu;
 float _HyperElasticLambda;
 
 RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
-RWStructuredBuffer<MpmCell> _GridBuffer;
+//RWStructuredBuffer<MpmCell> _GridBuffer;
+RWStructuredBuffer<LockMpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
 void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)

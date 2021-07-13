@@ -47,7 +47,8 @@ float _HyperElasticHardening;
 float _HyperElasticMu;
 float _HyperElasticLambda;
 StructuredBuffer<MpmParticle> _ParticlesBufferRead;
-RWStructuredBuffer<MpmCell> _GridBuffer;
+//RWStructuredBuffer<MpmCell> _GridBuffer;
+RWStructuredBuffer<LockMpmCell> _GridBuffer;
 
 int _CellNeighbourLength; //27
 RWStructuredBuffer<int3> _CellNeighbourBuffer; //27 array
@@ -170,23 +171,58 @@ void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 // http://pages.cs.wisc.edu/~sifakis/papers/GPU_MPM.pdf
 //
 [numthreads(THREAD_1D,1,1)]
-void BoundaryAndInterval(uint3 DTid : SV_DispatchThreadID)
+void BoundaryAndInterval(
+    // Unique id of entire thread
+    // numthreads.x * groups.x	
+	uint3 DTid : SV_DispatchThreadID,
+
+    // Group ID
+    // example:
+    //   if numthreads is (4,1,1)
+    //   0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3
+    uint3 groupId : SV_GroupID,
+
+    // Group index which is converted groupThreadId(3D) to 1D's number.
+    // example:
+    //   if numthreads is (4,1,1)
+    //   0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3
+	uint GI : SV_GroupIndex)
 {
 	const uint laneId = DTid.x;
 	if (laneId-1 < 0) { return; }
 	const uint cellId = _GridAndMassIdsBuffer[laneId].x;
 	const uint prevCellId = _GridAndMassIdsBuffer[laneId-1].x;
 
-	uint boundary = (laneId == 0 || cellId != prevCellId) ? 1 : 0;
+	// 
+	// Mark a boundary between different cells
+	//
+	// laneId == 0 does not have previous cell id. That's why
+	// cellId != prevCellId: if cell ids are different, it is boundary point
+	// GI == 0: boundary of group shared
+	//
+	uint boundary = (laneId == 0 || cellId != prevCellId
+		|| GI == 0) ? 1 : 0;
 
 	uint laneIdEnd = _GridIndicesBuffer[cellId].y;
+
+	//
+	// Mark region interval
+	//
+	// If the end of lane index is less than group shared boundary point,
+	// the end is _GridIndicesBuffer[cellId].y.
+	// else, the end is group shared boundary point
+	//
+	//uint regionInterval = laneIdEnd - 1 - laneId;
+	laneIdEnd = (laneIdEnd < (groupId.x + 1) * THREAD_1D)
+		? laneIdEnd
+		: (groupId.x + 1) * THREAD_1D;
 	uint regionInterval = laneIdEnd - 1 - laneId;
 
 	_BoundaryAndIntervalBuffer[laneId] = uint2(boundary, regionInterval);
 }
 
 
-groupshared P2GMass blockP2gMass[THREAD_1D];
+groupshared P2GMass blockP2gMass[THREAD_1D * 2];
 //groupshared float blockMass[128];
 //groupshared float3 blockMassXVelocity[128];
 
@@ -239,11 +275,19 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	// Only the boundary node (Leader node) needs to write
 	if (boundaryAndInterval.x)
 	{
-		MpmCell cell = _GridBuffer[cellIndex];
-		cell.mass = blockP2gMass[GI].mass;
-		cell.mass_x_velocity = blockP2gMass[GI].mass_x_velocity;
-		//cell.mass = blockMass[GI];
-		//cell.mass_x_velocity = blockMassXVelocity[GI];
-		_GridBuffer[cellIndex] = cell; //AtomicAdd is applied
+		//MpmCell cell = _GridBuffer[cellIndex];
+		//cell.mass = blockP2gMass[GI].mass;
+		//cell.mass_x_velocity = blockP2gMass[GI].mass_x_velocity;
+		//_GridBuffer[cellIndex] = cell; //AtomicAdd is applied
+
+		int intMass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
+		//int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
+		int intMassXVelocityX = (int) (blockP2gMass[GI].mass_x_velocity.x * FLOAT_TO_INT_DIGIT);
+		int intMassXVelocityY = (int) (blockP2gMass[GI].mass_x_velocity.y * FLOAT_TO_INT_DIGIT);
+		int intMassXVelocityZ = (int) (blockP2gMass[GI].mass_x_velocity.z * FLOAT_TO_INT_DIGIT);
+		InterlockedAdd(_GridBuffer[cellIndex].mass, intMass);
+		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.x, intMassXVelocityX);
+		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.y, intMassXVelocityY);
+		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.z, intMassXVelocityZ);
 	}
 }

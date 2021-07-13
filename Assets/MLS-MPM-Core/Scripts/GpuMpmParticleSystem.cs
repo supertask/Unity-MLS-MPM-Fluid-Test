@@ -28,6 +28,7 @@ namespace MlsMpm
         [SerializeField] public float HyperElasticHardening = 10.0f; //ポアソン比, Nu -> uppercase Ν, lowercase ν
         [SerializeField] public float SphereRadius = 3;
         [SerializeField] public int MaxNumOfParticles = 1024;
+        [SerializeField] public ImplementationType implementationType = ImplementationType.LockFreeScattering;
 
         //[SerializeField] protected Grid<Cell> grid;
         #endregion
@@ -100,9 +101,19 @@ namespace MlsMpm
             this.waitingParticleIndexesBuffer.SetCounterValue(0); // IMPORTANT: Append/Consumeの追加削除位置を0に設定する
 
             // Grid used on MPM
-            this.gridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(MpmCell)));
-            this.gridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
-                .Select(_ => new MpmCell()).ToArray());
+            if (this.implementationType == ImplementationType.Gathering)
+            {
+                this.gridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(MpmCell)));
+                this.gridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
+                    .Select(_ => new MpmCell()).ToArray());
+            }
+            else if (this.implementationType == ImplementationType.LockScattering ||
+                this.implementationType == ImplementationType.LockFreeScattering)
+            {
+                this.gridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(LockMpmCell)));
+                this.gridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
+                    .Select(_ => new LockMpmCell()).ToArray());
+            }
 
             // Particle's counter
             this.particleCountBuffer = new ComputeBuffer(4, Marshal.SizeOf(typeof(int)), ComputeBufferType.IndirectArguments);
@@ -134,8 +145,18 @@ namespace MlsMpm
             this.ComputeEmitParticles();
             this.ComputeInitGrid();
 
-            this.p2gModel.ComputeParticlesToGridGathering();
-            //this.p2gModel.ComputeParticlesToGridScatteringOpt();
+            if (this.implementationType == ImplementationType.Gathering)
+            {
+                this.p2gModel.ComputeParticlesToGridGathering();
+            }
+            else if (this.implementationType == ImplementationType.LockScattering)
+            {
+                //後で
+            }
+            else if (this.implementationType == ImplementationType.LockFreeScattering)
+            {
+                this.p2gModel.ComputeParticlesToGridScatteringOpt();
+            }
 
 
             this.ComputeUpdateGrid();

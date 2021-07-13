@@ -9,13 +9,15 @@
 
 float _DeltaTime;
 
-RWStructuredBuffer<MpmCell> _GridBuffer;
+//RWStructuredBuffer<MpmCell> _GridBuffer;
+RWStructuredBuffer<LockMpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
 void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
 {
 	const uint cid = DTid.x;
-    MpmCell cell = _GridBuffer[cid];
+    //MpmCell cell = _GridBuffer[cid];
+    LockMpmCell cell = _GridBuffer[cid];
 
 	uint3 cidx = CellIndex1DTo3D(cid);
 
@@ -28,10 +30,16 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
     }
     else
     {
-        cell.velocity = cell.mass_x_velocity / cell.mass;
+        //float mass = cell.mass;
+        //float mass_x_velocity = cell.mass_x_velocity;
+
+        float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT;
+        float mass_x_velocity = ((float)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT;
+
+        cell.velocity = mass_x_velocity / mass;
 
         float3 g = float3(0.0f,-9.8f, 0.0f);
-        cell.velocity += _DeltaTime * (cell.force / cell.mass + g);
+        cell.velocity += _DeltaTime * (cell.force / mass + g);
         if (cidx.x < 2 || cidx.x >= _GridResolutionWidth - 2) cell.velocity.x = 0;
         if (cidx.y < 2 || cidx.y >= _GridResolutionHeight - 2) cell.velocity.y = 0;
         if (cidx.z < 2 || cidx.z >= _GridResolutionDepth - 2) cell.velocity.z = 0;

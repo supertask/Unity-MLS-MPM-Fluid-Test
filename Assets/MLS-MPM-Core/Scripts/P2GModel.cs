@@ -166,7 +166,7 @@ namespace MlsMpm
             this.ComputeP2GMass();
 
             //存在しないやつ
-            int startIndex = 1024*20;
+            //int startIndex = 1024*20;
             //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+3);
             //Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, startIndex, startIndex+3);
 
@@ -199,7 +199,7 @@ namespace MlsMpm
                 Util.DebugBuffer<uint2>(this.gridOptimizer.GetGridIndicesBuffer(), 0, 30);
                 Debug.Log("---");
 
-                Util.DebugBuffer<MpmCell>(this.mediator.GridBuffer, 0, 30);
+                Util.DebugBuffer<LockMpmCell>(this.mediator.GridBuffer, 0, 30);
                 Debug.Log("---");
 
                 Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 0, numOfP2GMasses);
