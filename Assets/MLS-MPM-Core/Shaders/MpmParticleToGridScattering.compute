@@ -25,7 +25,7 @@ RWStructuredBuffer<LockMpmCell> _LockGridBuffer;
 void P2GScattering(uint3 DTid : SV_DispatchThreadID)
 {
     const uint particleId = DTid.x;
-	if (particleId > _NumOfParticles) return;
+	//if (particleId > _NumOfParticles) return;
 
 	MpmParticle particle = _ParticlesBufferRead[particleId];
 	if (particle.type == TYPE__INACTIVE) return;
@@ -86,21 +86,24 @@ void P2GScattering(uint3 DTid : SV_DispatchThreadID)
 				int3 cellIndex3D = centerCellIndex3D + int3(gx,gy,gz);
 				uint cellIndex = CellIndex3DTo1D(cellIndex3D);
 
-				if (InGrid(cellIndex))
+				if (InGrid(cellIndex3D))
 				{
-					float3 gridPositionWS = CellIndex3DToPositionWS(cellIndex);
+					float3 gridPositionWS = CellIndex3DToPositionWS(cellIndex3D);
 					float weight = GetWeight(particle.position, int3(gx,gy,gz));
 
 					//ここでロックする
 					float mass = weight * particle.mass;
 					float3 mass_x_velocity = weight * (particle.mass * particle.velocity
 						+ mul(apic, (gridPositionWS - particle.position)));
-					InterlockedAdd(_LockGridBuffer[cellIndex].mass, (int)(mass * FLOAT_TO_INT_DIGIT));
-
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass, (int)(mass * FLOAT_TO_INT_DIGIT) );
 					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT) );
 					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT) );
 					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.z, (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT) );
-					//_LockGridBuffer[cellIndex] = cell;
+
+					//_LockGridBuffer[cellIndex].mass += (int)(mass * FLOAT_TO_INT_DIGIT);
+					//_LockGridBuffer[cellIndex].mass_x_velocity.x += (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT);
+					//_LockGridBuffer[cellIndex].mass_x_velocity.y += (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT);
+					//_LockGridBuffer[cellIndex].mass_x_velocity.z += (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT);
 				}
 			}
 		}

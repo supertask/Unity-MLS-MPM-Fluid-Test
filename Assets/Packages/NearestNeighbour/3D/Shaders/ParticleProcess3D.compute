@@ -27,7 +27,7 @@ void Update(uint3 DTid : SV_DispatchThreadID) {
 			unsigned int G_CELL = GridKey(uint3(X, Y, Z));	// Calculate NEIGHBOUR (or own) Cell ID
 
 			// inside own cell
-			if (G_CELL == GridKey(G_XYZ)) {
+			if (G_CELL == GridKey(G_LFScattering)) {
 
 				// fill red
 				uint2 G_START_END = _GridIndicesBuffer[G_CELL];

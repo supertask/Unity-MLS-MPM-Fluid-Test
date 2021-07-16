@@ -401,14 +401,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 522039639, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 522039640, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: SphereRadius
@@ -416,23 +408,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
-      propertyPath: updateGridCS
-      value: 
-      objectReference: {fileID: 7200000, guid: bdc1eb0633820bb47ad1749a9a75d507, type: 3}
-    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
-        type: 3}
-      propertyPath: p2gScatteringCS
-      value: 
-      objectReference: {fileID: 7200000, guid: 3e35c879d4fbb2540a1e093711b0a73a, type: 3}
-    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
-        type: 3}
       propertyPath: MaxNumOfParticles
-      value: 512
+      value: 2048
       objectReference: {fileID: 0}
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: implementationType
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}

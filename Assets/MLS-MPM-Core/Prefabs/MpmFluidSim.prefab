@@ -48,6 +48,7 @@ MonoBehaviour:
   particlesManagerCS: {fileID: 7200000, guid: c8e12ab375ba01a4cbb8a95e7904e469, type: 3}
   initGridCS: {fileID: 7200000, guid: 51d655339f61f234c905961723cb6be0, type: 3}
   p2gCS: {fileID: 7200000, guid: 50d8eb457faadcc4194cdee8de727d08, type: 3}
+  p2gScatteringCS: {fileID: 7200000, guid: 3e35c879d4fbb2540a1e093711b0a73a, type: 3}
   p2gScatteringOptCS: {fileID: 7200000, guid: 2f6618ceb3c55c542a710fdc8e329df1, type: 3}
   updateGridCS: {fileID: 7200000, guid: bdc1eb0633820bb47ad1749a9a75d507, type: 3}
   gridToParticlesCS: {fileID: 7200000, guid: f58c60ada5c7acb43b35ec1862e32d51, type: 3}
@@ -60,6 +61,7 @@ MonoBehaviour:
   HyperElasticHardening: 10
   SphereRadius: 3
   MaxNumOfParticles: 1024
+  implementationType: 1
 --- !u!114 &522039639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,7 +69,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3423425001010626360}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5494be0a10a74c4f9d2460dd347f77c, type: 3}
   m_Name: 
@@ -81,7 +83,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3423425001010626360}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f0106432343f12409caed329d212e57, type: 3}
   m_Name: 

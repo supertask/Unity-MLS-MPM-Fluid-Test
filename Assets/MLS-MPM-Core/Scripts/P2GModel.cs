@@ -171,6 +171,12 @@ namespace MlsMpm
                 Mathf.CeilToInt(this.mediator.MaxNumOfParticles / (float)this.p2gScatteringKernel.ThreadX),
                 (int)this.p2gScatteringKernel.ThreadY,
                 (int)this.p2gScatteringKernel.ThreadZ);
+
+            if (Input.GetKeyDown(KeyCode.Space)) {
+                Util.DebugBuffer<LockMpmCell>(this.mediator.LockGridBuffer, 0, this.mediator.NumOfCells);
+                Debug.Log("---");
+            }
+
         }
         public void ComputeParticlesToGridScatteringOpt()
         {
@@ -303,6 +309,7 @@ namespace MlsMpm
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.BoundaryAndIntervalBuffer, this.boundaryAndIntervalBuffer);
 
+            //Here
             //たぶんここはバグってる
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.SortedP2GMassBuffer, this.sortedP2gMassBuffer);

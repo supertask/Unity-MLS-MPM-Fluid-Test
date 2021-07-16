@@ -49,7 +49,7 @@ inline float3x3 InvApicD()
 inline uint3 ParticlePositionToCellIndex3D(float3 pos)
 {
 	// return uint3(pos-_CellStartPos); // by Yuan
-	 return uint3( (pos-_CellStartPos) / _GridSpacingH ); // by Yuan
+	 return uint3( (pos-_CellStartPos) / _GridSpacingH ); // by Tasuku
 }
 
 inline uint CellIndex3DTo1D(uint3 idx)

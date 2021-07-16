@@ -35,9 +35,9 @@ void BuildGridCS(uint3 DTid : SV_DispatchThreadID) {
 
 	//おそらく, ここで非アクティブなパーティクルの扱いを定義する必要がある
 	float3 position = _P2GMassBuffer[P_ID].position;
-	float3 grid_xyz = GridCalculateCell(position);
+	float3 grid_LFScattering = GridCalculateCell(position);
 
-	_GridBufferWrite[P_ID] = MakeKeyValuePair((uint3)grid_xyz, P_ID);
+	_GridBufferWrite[P_ID] = MakeKeyValuePair((uint3)grid_LFScattering, P_ID);
 }
 */
 

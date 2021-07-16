@@ -73,7 +73,8 @@ void ClearBuffers(uint3 DTid : SV_DispatchThreadID)
 void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 {
     const uint particleId = DTid.x;
-	if (_NumOfParticles > particleId) return;
+	//if (_NumOfParticles > particleId) return;
+
 	MpmParticle particle = _ParticlesBufferRead[particleId];
 	if (particle.type == TYPE__INACTIVE) return;
 
