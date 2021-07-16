@@ -18,7 +18,7 @@ public abstract class GridOptimizerBase {
 
 
     protected ComputeShader GridSortCS;
-    protected static readonly int SIMULATION_BLOCK_SIZE_FOR_GRID = 256;
+    //protected static readonly int SIMULATION_BLOCK_SIZE_FOR_GRID = 256;
     
 
     protected int threadGroupSize;
@@ -75,7 +75,7 @@ public abstract class GridOptimizerBase {
         ComputeBuffer p2gMassBuffer,
         ComputeBuffer sortedP2gMassBuffer) {
 
-        GridSortCS.SetInt("_NumParticles", numObjects);
+        GridSortCS.SetInt("_NumOfMasses", numObjects);
         SetCSVariables();
 
         //int kernel = 0;
@@ -120,6 +120,9 @@ public abstract class GridOptimizerBase {
         //
         // Sort by grid index
         // output: gridAndMassIdsBuffer
+        //
+        //これがないと状態(コメントアウトする状態)だと，確実にバグる
+        //ある状態でも，たまにバグる
         bitonicSort.Sort(ref gridAndMassIdsBuffer, ref gridPingPongBuffer);
 
         //startIndex = 1024*20;
@@ -165,6 +168,8 @@ public abstract class GridOptimizerBase {
         //GridSortCS.SetBuffer(kernel, "_P2GMassBuffer", p2gMassBuffer);
         //GridSortCS.SetBuffer(kernel, "_SortedP2GMassBuffer", sortedP2gMassBuffer);
         //GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
+
+        //ここでたまに落ちるようになっている
         this.rearrangeParticlesKernel = new Kernel(this.GridSortCS, "RearrangeParticlesCS");
         GridSortCS.SetBuffer(this.rearrangeParticlesKernel.Index, "_GridAndMassIdsBuffer", gridAndMassIdsBuffer);
         GridSortCS.SetBuffer(this.rearrangeParticlesKernel.Index, "_P2GMassBuffer", p2gMassBuffer);

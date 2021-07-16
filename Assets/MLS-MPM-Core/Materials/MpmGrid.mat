@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: MpmGrid
   m_Shader: {fileID: 4800000, guid: d5ef2784a516c6c4a8efc1f6cf5a09e7, type: 3}
-  m_ShaderKeywords: __LockFreeScattering
+  m_ShaderKeywords: ImplementLockFreeScattering LFScattering __LockFreeScattering
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0

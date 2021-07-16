@@ -12,11 +12,10 @@ float _DeltaTime;
 RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
 
 
-#if defined(__LockGathering) || defined(__LockFreeGathering)
-	RWStructuredBuffer<LockMpmCell> _GridBuffer;
-#else
-	RWStructuredBuffer<MpmCell> _GridBuffer;
-#endif
+RWStructuredBuffer<LockMpmCell> _LockGridBuffer;
+RWStructuredBuffer<MpmCell> _GridBuffer;
+
+//RWStructuredBuffer<LockMpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D, 1, 1)]
 void GridToParticle(uint3 DTid : SV_DispatchThreadID)
@@ -43,7 +42,11 @@ void GridToParticle(uint3 DTid : SV_DispatchThreadID)
 				{
 					float3 gpos = CellIndex3DToPositionWS(cid);
 					float weight = GetWeight(particle.position, delta);
-					float3 velocity = _GridBuffer[idx].velocity;
+					#if defined(LScattering) || defined(LFScattering)
+						float3 velocity = _LockGridBuffer[idx].velocity;
+					#else
+						float3 velocity = _GridBuffer[idx].velocity;
+					#endif
 
 					particle.velocity += weight * velocity;
 					particle.C += 4 * _GridSpacingInvH * Math_OuterProduct(weight * velocity, gpos-particle.position); // by Yuan

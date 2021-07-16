@@ -24,14 +24,14 @@
 	float     _DebugObjectSize;
 
 
-	#if defined(__LockGathering) || defined(__LockFreeGathering)
-		StructuredBuffer<LockMpmCell> _GridBuffer;
-	#else
-		StructuredBuffer<MpmCell> _GridBuffer;
-	#endif
+	//#if defined(LScattering) || defined(LFScattering)
+	//	StructuredBuffer<LockMpmCell> _LockGridBuffer;
+	//#else
+	//	StructuredBuffer<MpmCell> _GridBuffer;
+	//#endif
 	
-	//StructuredBuffer<MpmCell> _GridBuffer;
-	//StructuredBuffer<LockMpmCell> _GridBuffer;
+	StructuredBuffer<MpmCell> _GridBuffer;
+	StructuredBuffer<LockMpmCell> _LockGridBuffer;
 
 	/*
 	int     _GridResolutionWidth;
@@ -75,10 +75,9 @@
 		//float mass = cell.mass;
 		//LockMpmCell cell = _GridBuffer[cellIndex];
 
-		#if defined(__LockGathering) || defined(__LockFreeGathering)
-			//LockMpmCell cell = _GridBuffer[cellIndex];
-			//float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
-			float mass = (float)cell.mass;
+		#if defined(LScattering) || defined(LFScattering)
+			LockMpmCell cell = _LockGridBuffer[cellIndex];
+			float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
 		#else
 			MpmCell cell = _GridBuffer[cellIndex];
 			float mass = cell.mass;

@@ -1,6 +1,10 @@
 ﻿#ifndef CONSTANT_INCLUDED
 #define CONSTANT_INCLUDED
 
+#define Gathering
+//#define LScattering
+//#define LFScattering
+
 #define PI 3.14159265359
 #define GOLDEN_RATIO 1.61803398874989484820459
 #define SQ2 1.41421356237309504880169 //Square Root of Two
@@ -12,7 +16,7 @@
 #define TYPE__FLUID 3
 
 // For InterlockedAdd with float value
-#define FLOAT_TO_INT_DIGIT 10000
+#define FLOAT_TO_INT_DIGIT 1000
 #define INT_TO_FLOAT_DIGIT (1.0 / (float)FLOAT_TO_INT_DIGIT)
 
 static const float4x4 Identity =

@@ -68,6 +68,7 @@ namespace MlsMpm
 
             this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
             this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.GridBuffer, this.mediator.GridBuffer);
+            this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.LockGridBuffer, this.mediator.LockGridBuffer);
             this.material.SetPass(0);
 
             /*

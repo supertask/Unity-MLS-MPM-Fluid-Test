@@ -1,4 +1,4 @@
-﻿#pragma kernel ParticleToGridScatteringOpt
+﻿#pragma kernel P2GScattering
 
 //Assets/MLS-MPM-Core/Shaders
 #include "MpmStruct.hlsl"
@@ -6,10 +6,11 @@
 #include "./Grid.hlsl"
 #include "./SVD.hlsl"
 
-#define THREAD_1D 256
+//#define THREAD_1D 256
+#define THREAD_1D 64
 
 float _DeltaTime;
-int _NumOfParticles;
+uint _NumOfParticles;
 
 // Parameters of hyper elastic material.
 float _HyperElasticHardening;
@@ -17,13 +18,15 @@ float _HyperElasticMu;
 float _HyperElasticLambda;
 
 RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
-//RWStructuredBuffer<MpmCell> _GridBuffer;
-RWStructuredBuffer<LockMpmCell> _GridBuffer;
+RWStructuredBuffer<MpmCell> _GridBuffer;
+RWStructuredBuffer<LockMpmCell> _LockGridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
-void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)
+void P2GScattering(uint3 DTid : SV_DispatchThreadID)
 {
     const uint particleId = DTid.x;
+	if (particleId > _NumOfParticles) return;
+
 	MpmParticle particle = _ParticlesBufferRead[particleId];
 	if (particle.type == TYPE__INACTIVE) return;
 
@@ -89,11 +92,15 @@ void ParticleToGridScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 					float weight = GetWeight(particle.position, int3(gx,gy,gz));
 
 					//ここでロックする
-					LockMpmCell cell = _GridBuffer[cellIndex];
-					cell.mass += weight * particle.mass;
-					cell.mass_x_velocity += weight * (particle.mass * particle.velocity
+					float mass = weight * particle.mass;
+					float3 mass_x_velocity = weight * (particle.mass * particle.velocity
 						+ mul(apic, (gridPositionWS - particle.position)));
-					_GridBuffer[cellIndex] = cell;
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass, (int)(mass * FLOAT_TO_INT_DIGIT));
+
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT) );
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT) );
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.z, (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT) );
+					//_LockGridBuffer[cellIndex] = cell;
 				}
 			}
 		}

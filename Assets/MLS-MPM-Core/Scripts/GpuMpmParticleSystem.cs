@@ -18,6 +18,7 @@ namespace MlsMpm
         [SerializeField] public ComputeShader particlesManagerCS;
         [SerializeField] public ComputeShader initGridCS;
         [SerializeField] public ComputeShader p2gCS;
+        [SerializeField] public ComputeShader p2gScatteringCS;
         [SerializeField] public ComputeShader p2gScatteringOptCS;
         [SerializeField] public ComputeShader updateGridCS;
         [SerializeField] public ComputeShader gridToParticlesCS;
@@ -37,6 +38,7 @@ namespace MlsMpm
         #region Public members
         public ComputeBuffer ParticlesBuffer => particlesBuffer;
         public ComputeBuffer GridBuffer => gridBuffer;
+        public ComputeBuffer LockGridBuffer => lockGridBuffer;
         public int NumOfCells => numOfCells;
 
         public static int MAX_EMIT_NUM = 8;
@@ -47,6 +49,7 @@ namespace MlsMpm
         private Kernel initGridKernel;
         private Kernel updateGridKernel, gridToParticlesKernel;
         private ComputeBuffer gridBuffer;
+        private ComputeBuffer lockGridBuffer;
         private ComputeBuffer particlesBuffer;
         private ComputeBuffer sortedParticlesBuffer;
         private ComputeBuffer waitingParticleIndexesBuffer;
@@ -62,9 +65,9 @@ namespace MlsMpm
         #region Shader property IDs
         public static class ShaderKeyword
         {
-            public static string Gathering = "__Gathering";
-            public static string LockScattering = "__LockScattering";
-            public static string LockFreeScattering = "__LockFreeScattering";
+            public static string Gathering = "Gathering";
+            public static string LockScattering = "LScattering";
+            public static string LockFreeScattering = "LFScattering";
         }
         public static class ShaderID
         {
@@ -79,6 +82,7 @@ namespace MlsMpm
             public static int SphereRadius = Shader.PropertyToID("_SphereRadius");
 
             public static int GridBuffer = Shader.PropertyToID("_GridBuffer");
+            public static int LockGridBuffer = Shader.PropertyToID("_LockGridBuffer");
             public static int ParticlesBuffer = Shader.PropertyToID("_ParticlesBuffer");
             public static int ParticlesBufferRead = Shader.PropertyToID("_ParticlesBufferRead");
             public static int ParticlesBufferWrite = Shader.PropertyToID("_ParticlesBufferWrite");
@@ -90,7 +94,8 @@ namespace MlsMpm
         protected void OnEnable()
         {
             this.numOfCells = this.gridWidth * this.gridHeight * this.gridDepth;
-            this.p2gModel = new P2GModel(this, this.MaxNumOfParticles, this.p2gCS, this.p2gScatteringOptCS);
+            this.p2gModel = new P2GModel(this, this.MaxNumOfParticles,
+                this.p2gCS, this.p2gScatteringCS, this.p2gScatteringOptCS);
             this.p2gModel.SetMediator(this);
 
             // Particles used on MPM
@@ -107,19 +112,19 @@ namespace MlsMpm
             this.waitingParticleIndexesBuffer.SetCounterValue(0); // IMPORTANT: Append/Consumeの追加削除位置を0に設定する
 
             // Grid used on MPM
-            if (this.implementationType == ImplementationType.Gathering)
-            {
+            //if (this.implementationType == ImplementationType.Gathering)
+            //{
                 this.gridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(MpmCell)));
                 this.gridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
                     .Select(_ => new MpmCell()).ToArray());
-            }
-            else if (this.implementationType == ImplementationType.LockScattering ||
-                this.implementationType == ImplementationType.LockFreeScattering)
-            {
-                this.gridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(LockMpmCell)));
-                this.gridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
+            //}
+            //else if (this.implementationType == ImplementationType.LockScattering ||
+            //    this.implementationType == ImplementationType.LockFreeScattering)
+            //{
+                this.lockGridBuffer = new ComputeBuffer(this.numOfCells, Marshal.SizeOf(typeof(LockMpmCell)));
+                this.lockGridBuffer.SetData(Enumerable.Range(0, this.numOfCells)
                     .Select(_ => new LockMpmCell()).ToArray());
-            }
+            //}
 
             // Particle's counter
             this.particleCountBuffer = new ComputeBuffer(4, Marshal.SizeOf(typeof(int)), ComputeBufferType.IndirectArguments);
@@ -157,7 +162,7 @@ namespace MlsMpm
             }
             else if (this.implementationType == ImplementationType.LockScattering)
             {
-                //後で
+                this.p2gModel.ComputeParticlesToGridScattering();
             }
             else if (this.implementationType == ImplementationType.LockFreeScattering)
             {
@@ -267,6 +272,7 @@ namespace MlsMpm
         public void SetCommonParameters(ComputeShader target)
         {
 
+            /*
             if (this.implementationType == ImplementationType.Gathering)
             {
                 target.EnableKeyword(ShaderKeyword.Gathering);
@@ -287,8 +293,9 @@ namespace MlsMpm
                 //Debug.LogFormat("Gathering={0}, LockFreeScattering={1}",
                 //    target.IsKeywordEnabled(ShaderKeyword.Gathering),
                 //    target.IsKeywordEnabled(ShaderKeyword.LockFreeScattering) );
-
             }
+            */
+            //Debug.Log("Time.deltaTime: " + Time.deltaTime + ", timeScale" + Time.timeScale);
             target.SetFloat(ShaderID.DeltaTime, Time.deltaTime);
             target.SetVector(ShaderID.CellStartPos, this.GetCellStartPos());
             target.SetFloat(ShaderID.GridSpacingH, this.gridSpacingH);
@@ -301,6 +308,7 @@ namespace MlsMpm
         {
             this.SetCommonParameters(this.initGridCS);
             this.initGridCS.SetBuffer(this.initGridKernel.Index, ShaderID.GridBuffer, this.gridBuffer);
+            this.initGridCS.SetBuffer(this.initGridKernel.Index, ShaderID.LockGridBuffer, this.lockGridBuffer);
             this.initGridCS.Dispatch(this.initGridKernel.Index,
                 Mathf.CeilToInt(this.numOfCells / (float)this.initGridKernel.ThreadX),
                 (int)this.initGridKernel.ThreadY,
@@ -313,6 +321,7 @@ namespace MlsMpm
         {
             this.SetCommonParameters(this.updateGridCS);
             this.updateGridCS.SetBuffer(this.updateGridKernel.Index, ShaderID.GridBuffer, this.gridBuffer);
+            this.updateGridCS.SetBuffer(this.updateGridKernel.Index, ShaderID.LockGridBuffer, this.lockGridBuffer);
             this.updateGridCS.Dispatch(this.updateGridKernel.Index,
                 Mathf.CeilToInt(this.numOfCells / (float)this.updateGridKernel.ThreadX),
                 (int)this.updateGridKernel.ThreadY,
@@ -325,6 +334,7 @@ namespace MlsMpm
             this.SetCommonParameters(this.gridToParticlesCS);
             this.gridToParticlesCS.SetBuffer(this.gridToParticlesKernel.Index, ShaderID.ParticlesBufferRead, this.particlesBuffer);
             this.gridToParticlesCS.SetBuffer(this.gridToParticlesKernel.Index, ShaderID.GridBuffer, this.gridBuffer);
+            this.gridToParticlesCS.SetBuffer(this.gridToParticlesKernel.Index, ShaderID.LockGridBuffer, this.lockGridBuffer);
             this.gridToParticlesCS.Dispatch(this.gridToParticlesKernel.Index,
                 Mathf.CeilToInt(this.MaxNumOfParticles / (float)this.gridToParticlesKernel.ThreadX),
                 (int)this.gridToParticlesKernel.ThreadY,
@@ -377,6 +387,7 @@ namespace MlsMpm
         {
             Util.ReleaseBuffer(this.waitingParticleIndexesBuffer);
             Util.ReleaseBuffer(this.gridBuffer);
+            Util.ReleaseBuffer(this.lockGridBuffer);
             Util.ReleaseBuffer(this.particlesBuffer);
             Util.ReleaseBuffer(this.sortedParticlesBuffer);
             Util.ReleaseBuffer(this.particleCountBuffer);

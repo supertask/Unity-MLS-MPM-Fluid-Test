@@ -9,26 +9,41 @@
 
 float _DeltaTime;
 
-#if defined(__LockGathering) || defined(__LockFreeGathering)
-    RWStructuredBuffer<LockMpmCell> _GridBuffer;
-#else
-    RWStructuredBuffer<MpmCell> _GridBuffer;
-#endif
+RWStructuredBuffer<LockMpmCell> _LockGridBuffer;
+RWStructuredBuffer<MpmCell> _GridBuffer;
+//#if defined(LScattering) || defined(LFScattering)
+//#else
+//#endif
+
+//RWStructuredBuffer<LockMpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
 void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
 {
 	const uint idx = DTid.x;
 
-	#if defined(__LockGathering) || defined(__LockFreeGathering)
-		LockMpmCell cell = _GridBuffer[idx];
-	#else
-		MpmCell cell = _GridBuffer[idx];
-	#endif
+    #if defined(LScattering) || defined(LFScattering)
+        LockMpmCell cell = _LockGridBuffer[idx];
+    #else
+        MpmCell cell = _GridBuffer[idx];
+    #endif
+    //LockMpmCell cell = _GridBuffer[idx];
 
 	uint3 cidx = CellIndex1DTo3D(idx);
 
-    if (cell.mass <= 0)
+    #if defined(LScattering) || defined(LFScattering)
+        //float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT;
+        //float3 mass_x_velocity = ((float3)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT;
+        float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
+        float3 mass_x_velocity = ((float3)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT;
+    #else
+        float mass = cell.mass;
+        float3 mass_x_velocity = cell.mass_x_velocity;
+    #endif
+    //float mass = cell.mass;
+    //float3 mass_x_velocity = cell.mass_x_velocity;
+
+    if (mass <= 0)
     {
 		cell.force = 0;
         cell.mass = 0;
@@ -37,18 +52,11 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
     }
     else
     {
-
-        #if defined(__LockGathering) || defined(__LockFreeGathering)
-            //float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT;
-            //float3 mass_x_velocity = ((float)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT;
-            float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
-            float3 mass_x_velocity = ((float)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT;
-        #else
-            float mass = cell.mass;
-            float3 mass_x_velocity = cell.mass_x_velocity;
-        #endif
+        //float mass = cell.mass * INT_TO_FLOAT_DIGIT;
+        //float3 mass_x_velocity = cell.mass_x_velocity * INT_TO_FLOAT_DIGIT;
 
         cell.velocity = mass_x_velocity / mass;
+        //cell.velocity = float3(0,-1,0);
 
         float3 g = float3(0.0f,-9.8f, 0.0f);
         cell.velocity += _DeltaTime * (cell.force / mass + g);
@@ -57,5 +65,9 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
         if (cidx.z < 2 || cidx.z >= _GridResolutionDepth - 2) cell.velocity.z = 0;
     }
 
-    _GridBuffer[idx] = cell;
+    #if defined(LScattering) || defined(LFScattering)
+        _LockGridBuffer[idx] = cell;
+    #else
+        _GridBuffer[idx] = cell;
+    #endif
 }

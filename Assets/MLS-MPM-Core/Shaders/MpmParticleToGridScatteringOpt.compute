@@ -19,7 +19,7 @@
 #define THREAD_1D 64
 
 float _DeltaTime;
-int _NumOfParticles;
+uint _NumOfParticles;
 
 
 // lock-free based GPU optimazation
@@ -29,6 +29,7 @@ int _NumOfParticles;
 RWStructuredBuffer<uint2> _GridAndMassIdsBuffer;
 RWStructuredBuffer<uint2> _GridPingPongBuffer;
 RWStructuredBuffer<P2GMass> _P2GMassBuffer;
+StructuredBuffer<P2GMass> _SortedP2GMassBuffer;
 
 // if _GridBufferRead'x is 0000011111122222334444,
 // _GridIndicesBuffer will be
@@ -47,8 +48,8 @@ float _HyperElasticHardening;
 float _HyperElasticMu;
 float _HyperElasticLambda;
 StructuredBuffer<MpmParticle> _ParticlesBufferRead;
-//RWStructuredBuffer<MpmCell> _GridBuffer;
-RWStructuredBuffer<LockMpmCell> _GridBuffer;
+RWStructuredBuffer<MpmCell> _GridBuffer;
+RWStructuredBuffer<LockMpmCell> _LockGridBuffer;
 
 int _CellNeighbourLength; //27
 RWStructuredBuffer<int3> _CellNeighbourBuffer; //27 array
@@ -72,6 +73,7 @@ void ClearBuffers(uint3 DTid : SV_DispatchThreadID)
 void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 {
     const uint particleId = DTid.x;
+	if (_NumOfParticles > particleId) return;
 	MpmParticle particle = _ParticlesBufferRead[particleId];
 	if (particle.type == TYPE__INACTIVE) return;
 
@@ -131,6 +133,9 @@ void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 		int3 cellIndex3D = centerCellIndex3D + _CellNeighbourBuffer[ni];
 		uint cellIndex1D = CellIndex3DTo1D(cellIndex3D);
 
+		//For debug
+		//_GridAndMassIdsBuffer[particleId + ni * _NumOfParticles] = uint2(DTid.x, 27);
+
 		//TODO(Tasuku): 後でここのInGridのifを消す
 		if (InGrid(cellIndex3D))
 		{
@@ -141,8 +146,10 @@ void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 			p2gMass.mass = weight * particle.mass;
 			p2gMass.mass_x_velocity = weight * (particle.mass * particle.velocity
 				+ mul(apic, (gridPositionWS - particle.position)));
-			//p2gMass.mass = 1;
-			//p2gMass.mass_x_velocity = 1;
+				
+			//Debug!!!
+			//p2gMass.mass = particle.velocity;
+			//p2gMass.mass_x_velocity = particle.velocity;
 
 			uint laneId = particleId + ni * _NumOfParticles;
 
@@ -157,6 +164,12 @@ void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 
 			// For debug
 			//_GridAndMassIdsBuffer[particleId + ni * _NumOfParticles] = uint2(DTid.x, ni * _NumOfParticles);
+
+			//#if defined(LScattering) || defined(LFScattering)
+			//	_GridAndMassIdsBuffer[particleId + ni * _NumOfParticles] = uint2(DTid.x, 55);
+			//#else
+			//	_GridAndMassIdsBuffer[particleId + ni * _NumOfParticles] = uint2(DTid.x, 88);
+			//#endif
 		}
 	}
 
@@ -200,8 +213,8 @@ void BoundaryAndInterval(
 	// cellId != prevCellId: if cell ids are different, it is boundary point
 	// GI == 0: boundary of group shared
 	//
-	//uint boundary = (laneId == 0 || cellId != prevCellId || GI == 0) ? 1 : 0;
-	uint boundary = (laneId == 0 || cellId != prevCellId) ? 1 : 0;
+	uint boundary = (laneId == 0 || cellId != prevCellId || GI == 0) ? 1 : 0;
+	//uint boundary = (laneId == 0 || cellId != prevCellId) ? 1 : 0;
 
 	uint laneIdEnd = _GridIndicesBuffer[cellId].y;
 
@@ -212,11 +225,11 @@ void BoundaryAndInterval(
 	// the end is _GridIndicesBuffer[cellId].y.
 	// else, the end is group shared boundary point
 	//
-	uint regionInterval = laneIdEnd - 1 - laneId;
-	//laneIdEnd = (laneIdEnd < (groupId.x + 1) * THREAD_1D)
-	//	? laneIdEnd
-	//	: (groupId.x + 1) * THREAD_1D;
 	//uint regionInterval = laneIdEnd - 1 - laneId;
+	laneIdEnd = (laneIdEnd < (groupId.x + 1) * THREAD_1D)
+		? laneIdEnd
+		: (groupId.x + 1) * THREAD_1D;
+	uint regionInterval = laneIdEnd - 1 - laneId;
 
 	_BoundaryAndIntervalBuffer[laneId] = uint2(boundary, regionInterval);
 }
@@ -258,7 +271,7 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	uint regionInterval = boundaryAndInterval.y;
 
 	// Store each particle info of 256 threads
-	P2GMass p2gMass = _P2GMassBuffer[massIndex];
+	P2GMass p2gMass = _SortedP2GMassBuffer[massIndex];
 	blockP2gMass[GI] = p2gMass;
 	GroupMemoryBarrierWithGroupSync();
 	for(uint stride = 1; stride < THREAD_1D; stride <<= 1)
@@ -275,21 +288,19 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	// Only the boundary node (Leader node) needs to write
 	if (boundary)
 	{
-		LockMpmCell cell = _GridBuffer[cellIndex];
-		cell.mass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
-		cell.mass_x_velocity = (int) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
-		_GridBuffer[cellIndex] = cell; //AtomicAdd is applied
+		//LockMpmCell cell = _LockGridBuffer[cellIndex];
+		//cell.mass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
+		//cell.mass_x_velocity = (int) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
+		//_LockGridBuffer[cellIndex] = cell; //AtomicAdd is applied
 
-		/*
 		int intMass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
 		//int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
 		int intMassXVelocityX = (int) (blockP2gMass[GI].mass_x_velocity.x * FLOAT_TO_INT_DIGIT);
 		int intMassXVelocityY = (int) (blockP2gMass[GI].mass_x_velocity.y * FLOAT_TO_INT_DIGIT);
 		int intMassXVelocityZ = (int) (blockP2gMass[GI].mass_x_velocity.z * FLOAT_TO_INT_DIGIT);
-		InterlockedAdd(_GridBuffer[cellIndex].mass, intMass);
-		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.x, intMassXVelocityX);
-		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.y, intMassXVelocityY);
-		InterlockedAdd(_GridBuffer[cellIndex].mass_x_velocity.z, intMassXVelocityZ);
-		*/
+		InterlockedAdd(_LockGridBuffer[cellIndex].mass, intMass);
+		InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, intMassXVelocityX);
+		InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, intMassXVelocityY);
+		InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.z, intMassXVelocityZ);
 	}
 }

@@ -16,6 +16,7 @@ namespace MlsMpm
         {
             public static int CellNeighbourBuffer = Shader.PropertyToID("_CellNeighbourBuffer");
             public static int P2GMassBuffer = Shader.PropertyToID("_P2GMassBuffer");
+            public static int SortedP2GMassBuffer = Shader.PropertyToID("_SortedP2GMassBuffer");
             public static int GridIndicesBuffer = Shader.PropertyToID("_GridIndicesBuffer");
             public static int GridAndMassIdsBuffer = Shader.PropertyToID("_GridAndMassIdsBuffer");
             public static int GridPingPongBuffer = Shader.PropertyToID("_GridPingPongBuffer");
@@ -32,6 +33,7 @@ namespace MlsMpm
         private GpuMpmParticleSystem mediator;
 
         private ComputeShader p2gCS;
+        private ComputeShader p2gScatteringCS;
         private ComputeShader p2gScatteringOptCS;
 
         private ComputeBuffer cellNeighbourBuffer;
@@ -41,9 +43,9 @@ namespace MlsMpm
         private ComputeBuffer sortedP2gMassBuffer;
         private ComputeBuffer boundaryAndIntervalBuffer;
         private Kernel p2gGatheringKernel;
+        private Kernel p2gScatteringKernel;
         private Kernel clearBuffersKernel, p2gScatteringOptKernel;
         private Kernel boundaryAndIntervalKernel, gatherAndWriteKernel;
-        private Kernel p2gScatteringKernel;
 
         private GridOptimizer3D<P2GMass> gridOptimizer;
 
@@ -56,10 +58,11 @@ namespace MlsMpm
 
         public P2GModel(
             GpuMpmParticleSystem mediator, int maxNumOfParticles,
-            ComputeShader p2gCS, ComputeShader p2gScatteringOptCS)
+            ComputeShader p2gCS, ComputeShader p2gScatteringCS, ComputeShader p2gScatteringOptCS)
         {
             this.SetMediator(mediator);
             this.p2gCS = p2gCS;
+            this.p2gScatteringCS = p2gScatteringCS;
             this.p2gScatteringOptCS = p2gScatteringOptCS;
             this.maxNumOfParticles = maxNumOfParticles;
             this.numOfP2GMasses = Mathf.NextPowerOfTwo(maxNumOfParticles * CELL_NEIGHBOUR_LENGTH); // 2 ^ x
@@ -79,6 +82,7 @@ namespace MlsMpm
         private void initBuffer()
         {
             this.p2gGatheringKernel = new Kernel(this.p2gCS, "P2GGathering");
+            this.p2gScatteringKernel = new Kernel(this.p2gScatteringCS, "P2GScattering");
             this.clearBuffersKernel = new Kernel(this.p2gScatteringOptCS, "ClearBuffers");
             this.p2gScatteringOptKernel = new Kernel(this.p2gScatteringOptCS, "P2GScatteringOpt");
             this.boundaryAndIntervalKernel = new Kernel(this.p2gScatteringOptCS, "BoundaryAndInterval");
@@ -104,6 +108,7 @@ namespace MlsMpm
 
             this.sortedP2gMassBuffer = new ComputeBuffer(this.numOfP2GMasses,
                 Marshal.SizeOf(typeof(P2GMass)));
+            //this.sortedP2gMassBuffer.SetData(p2gMasses);
 
             //uint2[] gridAndMassIds = Enumerable.Range(0, this.numOfP2GMasses)
             //    .Select(_ => new uint2(uint.MaxValue, uint.MaxValue)).ToArray();
@@ -142,6 +147,8 @@ namespace MlsMpm
                 GpuMpmParticleSystem.ShaderID.ParticlesBufferRead, this.mediator.ParticlesBuffer);
             this.p2gCS.SetBuffer(this.p2gGatheringKernel.Index,
                 GpuMpmParticleSystem.ShaderID.GridBuffer, this.mediator.GridBuffer);
+            this.p2gCS.SetBuffer(this.p2gGatheringKernel.Index,
+                GpuMpmParticleSystem.ShaderID.LockGridBuffer, this.mediator.LockGridBuffer);
             this.p2gCS.Dispatch(this.p2gGatheringKernel.Index,
                 Mathf.CeilToInt(this.mediator.NumOfCells / (float)this.p2gGatheringKernel.ThreadX),
                 (int)this.p2gGatheringKernel.ThreadY,
@@ -149,6 +156,22 @@ namespace MlsMpm
         }
 
 
+        public void ComputeParticlesToGridScattering()
+        {
+            this.mediator.SetCommonParameters(this.p2gScatteringCS);
+            this.SetCommonP2GParameters(this.p2gScatteringCS);
+
+            this.p2gScatteringCS.SetBuffer(this.p2gScatteringKernel.Index,
+                GpuMpmParticleSystem.ShaderID.ParticlesBufferRead, this.mediator.ParticlesBuffer);
+            this.p2gScatteringCS.SetBuffer(this.p2gScatteringKernel.Index,
+                GpuMpmParticleSystem.ShaderID.GridBuffer, this.mediator.GridBuffer);
+            this.p2gScatteringCS.SetBuffer(this.p2gScatteringKernel.Index,
+                GpuMpmParticleSystem.ShaderID.LockGridBuffer, this.mediator.LockGridBuffer);
+            this.p2gScatteringCS.Dispatch(this.p2gScatteringKernel.Index,
+                Mathf.CeilToInt(this.mediator.MaxNumOfParticles / (float)this.p2gScatteringKernel.ThreadX),
+                (int)this.p2gScatteringKernel.ThreadY,
+                (int)this.p2gScatteringKernel.ThreadZ);
+        }
         public void ComputeParticlesToGridScatteringOpt()
         {
             //
@@ -166,7 +189,7 @@ namespace MlsMpm
             this.ComputeP2GMass();
 
             //存在しないやつ
-            //int startIndex = 1024*20;
+            int startIndex = 1024*20;
             //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+3);
             //Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, startIndex, startIndex+3);
 
@@ -176,9 +199,13 @@ namespace MlsMpm
             // output: gridAndMassIdsBuffer, sortedP2gMassBuffer
             //
             this.gridOptimizer.SetCellStartPos(this.mediator.GetCellStartPos()); //When the grid has moved by user, it will change
+
+            // ここが原因でgridAndMassIdsなどが空になっている
+            // ここが原因でプログラムが落ちたりしている
             this.gridOptimizer.GridSort(
                 this.gridAndMassIdsBuffer, this.gridPingPongBuffer,
                 this.p2gMassBuffer, this.sortedP2gMassBuffer); 
+
 
             //Debug.Log(numOfP2GMasses);
             //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+3);
@@ -196,18 +223,21 @@ namespace MlsMpm
             if (Input.GetKeyDown(KeyCode.Space)) {
                 //index=0: uint2(0, 5357)
                 // 0 ~ 5357個も空の状態がある <- 予想通り
-                Util.DebugBuffer<uint2>(this.gridOptimizer.GetGridIndicesBuffer(), 0, 30);
-                Debug.Log("---");
+                //Util.DebugBuffer<MpmParticle>(this.mediator.ParticlesBuffer, 100, 113);
+                //Debug.Log("---");
 
-                Util.DebugBuffer<LockMpmCell>(this.mediator.GridBuffer, 0, 30);
-                Debug.Log("---");
+                //Util.DebugBuffer<uint2>(this.gridOptimizer.GetGridIndicesBuffer(), 0, 30);
+                //Debug.Log("---");
 
-                Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 0, numOfP2GMasses);
-                Debug.Log("---");
-                Util.DebugBuffer<uint2>(this.boundaryAndIntervalBuffer, 0, numOfP2GMasses);
-                Debug.Log("---");
-                Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, 0, numOfP2GMasses);
-                Debug.Log("=========");
+                //Util.DebugBuffer<LockMpmCell>(this.mediator.GridBuffer, 0, 30);
+                //Debug.Log("---");
+
+                //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 0, numOfP2GMasses);
+                //Debug.Log("---");
+                //Util.DebugBuffer<uint2>(this.boundaryAndIntervalBuffer, 0, numOfP2GMasses);
+                //Debug.Log("---");
+                //Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, 0, numOfP2GMasses);
+                //Debug.Log("=========");
             }
         }
 
@@ -239,8 +269,12 @@ namespace MlsMpm
                 ShaderID.GridAndMassIdsBuffer, this.gridAndMassIdsBuffer);
             this.p2gScatteringOptCS.SetBuffer(this.p2gScatteringOptKernel.Index,
                 ShaderID.P2GMassBuffer, this.p2gMassBuffer);
+            //this.p2gScatteringOptCS.Dispatch(this.p2gScatteringOptKernel.Index,
+            //    Mathf.CeilToInt(this.numOfP2GMasses / (float)this.p2gScatteringOptKernel.ThreadX),
+            //    (int)this.p2gScatteringOptKernel.ThreadY,
+            //    (int)this.p2gScatteringOptKernel.ThreadZ);
             this.p2gScatteringOptCS.Dispatch(this.p2gScatteringOptKernel.Index,
-                Mathf.CeilToInt(this.numOfP2GMasses / (float)this.p2gScatteringOptKernel.ThreadX),
+                Mathf.CeilToInt(this.maxNumOfParticles / (float)this.p2gScatteringOptKernel.ThreadX),
                 (int)this.p2gScatteringOptKernel.ThreadY,
                 (int)this.p2gScatteringOptKernel.ThreadZ);
         }
@@ -262,17 +296,23 @@ namespace MlsMpm
 
         public void GatherAndWriteP2G()
         {
-            //たぶんここはバグってる
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.GridIndicesBuffer, this.gridOptimizer.GetGridIndicesBuffer());
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.GridAndMassIdsBuffer, this.gridAndMassIdsBuffer);
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 ShaderID.BoundaryAndIntervalBuffer, this.boundaryAndIntervalBuffer);
+
+            //たぶんここはバグってる
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
-                ShaderID.P2GMassBuffer, this.p2gMassBuffer);
+                ShaderID.SortedP2GMassBuffer, this.sortedP2gMassBuffer);
+            //this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+            //    ShaderID.SortedP2GMassBuffer, this.p2gMassBuffer);
+
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 GpuMpmParticleSystem.ShaderID.GridBuffer, this.mediator.GridBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+                GpuMpmParticleSystem.ShaderID.LockGridBuffer, this.mediator.LockGridBuffer);
             this.p2gScatteringOptCS.Dispatch(this.gatherAndWriteKernel.Index,
                 Mathf.CeilToInt(this.numOfP2GMasses / (float)this.gatherAndWriteKernel.ThreadX),
                 (int)this.gatherAndWriteKernel.ThreadY,

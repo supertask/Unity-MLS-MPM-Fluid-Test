@@ -7,26 +7,29 @@
 
 #define THREAD_1D 256
 
-#if defined(__LockGathering) || defined(__LockFreeGathering)
-	RWStructuredBuffer<LockMpmCell> _GridBuffer;
-#else
-	RWStructuredBuffer<MpmCell> _GridBuffer;
-#endif
+RWStructuredBuffer<LockMpmCell> _LockGridBuffer;
+RWStructuredBuffer<MpmCell> _GridBuffer;
 
 [numthreads(THREAD_1D,1,1)]
 void InitGrid(uint3 DTid : SV_DispatchThreadID)
 {
 	uint idx = DTid.x;
 
-	#if defined(__LockGathering) || defined(__LockFreeGathering)
-		LockMpmCell cell = _GridBuffer[idx];
+	#if defined(LScattering) || defined(LFScattering)
+		LockMpmCell cell = _LockGridBuffer[idx];
 	#else
 		MpmCell cell = _GridBuffer[idx];
 	#endif
+	//LockMpmCell cell = _GridBuffer[idx];
 
 	cell.mass = 0;
 	cell.mass_x_velocity = 0;
 	cell.force = 0;
 	cell.velocity = 0;
-	_GridBuffer[idx] = cell;
+
+	#if defined(LScattering) || defined(LFScattering)
+		_LockGridBuffer[idx] = cell;
+	#else
+		_GridBuffer[idx] = cell;
+	#endif
 }

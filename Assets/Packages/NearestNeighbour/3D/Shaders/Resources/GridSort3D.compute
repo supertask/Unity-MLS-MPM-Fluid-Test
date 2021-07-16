@@ -9,13 +9,15 @@
 
 #include "NearestNeighbour3D.hlsl"
 
-StructuredBuffer<MpmParticle>	_P2GMassBuffer;
-RWStructuredBuffer<MpmParticle>	_SortedP2GMassBuffer;
+//StructuredBuffer<MpmParticle>	_P2GMassBuffer;
+//RWStructuredBuffer<MpmParticle>	_SortedP2GMassBuffer;
+StructuredBuffer<P2GMass>	_P2GMassBuffer;
+RWStructuredBuffer<P2GMass>	_SortedP2GMassBuffer;
 
 StructuredBuffer  <uint2>	_GridAndMassIdsBuffer;
 RWStructuredBuffer<uint2>	_GridBufferWrite;
 
-int _NumParticles;
+uint _NumOfMasses;
 
 // -----------------------------------------------------------
 // Grid
@@ -51,21 +53,22 @@ void BuildGridCS(uint3 DTid : SV_DispatchThreadID) {
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
 void ClearGridIndicesCS(uint3 DTid : SV_DispatchThreadID) {
 	// グリッドの個数分
-	_GridIndicesBuffer[DTid.x] = uint2(0, 0);
+	_GridIndicesBuffer[DTid.x] = uint2(0, 1);
 }
 
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
 void BuildGridIndicesCS(uint3 DTid : SV_DispatchThreadID) {
 	// パーティクルの個数分
 	const unsigned int P_ID = DTid.x;
+	if (P_ID > _NumOfMasses) { return; }
 
 	// 1個前のパーティクルIDを計算
-	uint P_ID_PREV = (P_ID == 0) ? (uint)_NumParticles : P_ID;
+	uint P_ID_PREV = (P_ID == 0) ? (uint)_NumOfMasses : P_ID;
 	P_ID_PREV--;
 
 	// 1個後のパーティクルIDを計算
 	uint P_ID_NEXT = P_ID + 1;
-	if (P_ID_NEXT == (uint)_NumParticles) { P_ID_NEXT = 0; }
+	if (P_ID_NEXT == (uint)_NumOfMasses) { P_ID_NEXT = 0; }
 
 	// ソート済みのGrid-Particleバッファから
 	// 自分がいるグリッドを計算する
@@ -87,9 +90,11 @@ void BuildGridIndicesCS(uint3 DTid : SV_DispatchThreadID) {
 
 [numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
 void RearrangeParticlesCS(uint3 DTid : SV_DispatchThreadID) {
-	const unsigned int laneId = DTid.x; // Particle ID to operate on
-	const unsigned int massId = GridGetValue(_GridAndMassIdsBuffer[laneId]);
-	_SortedP2GMassBuffer[laneId] = _P2GMassBuffer[massId];	// ソート済みに並び替える
+	uint laneId = DTid.x; // Particle ID to operate on
+	if (laneId > _NumOfMasses) { return; }
+	uint massId = _GridAndMassIdsBuffer[laneId].y;
+	if (massId < 0 || _NumOfMasses < massId) { return; }
+	_SortedP2GMassBuffer[laneId] = _P2GMassBuffer[massId]; // ソート済みに並び替える
 }
 
 /*

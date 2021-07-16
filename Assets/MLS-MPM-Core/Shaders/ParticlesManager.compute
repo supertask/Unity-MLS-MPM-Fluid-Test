@@ -78,8 +78,8 @@ void EmitParticles(uint3 DTid : SV_DispatchThreadID)
 
 	MpmParticle particle = _ParticlesBuffer[idx];
 	particle.type = _ParticleType;
-	particle.mass = 1;
-	particle.volume = 1;
+	particle.mass = (idx == 0) ? 0 : 1;
+	particle.volume = (idx == 0) ? 0 : 1;
 	//particle.position = float3(0, 0, 0); //randomの値を入れる
 	particle.position = _SphereRadius * randomPosOnSphere(idx); //randomの値を入れる
 	//particle.position = random3D(float2(idx, 0)); //randomの値を入れる
