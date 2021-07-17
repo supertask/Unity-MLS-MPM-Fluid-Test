@@ -58,10 +58,10 @@ MonoBehaviour:
   gridDepth: 64
   YoungsModulusE: 500
   PoissonRatioNu: 0.2
-  HyperElasticHardening: 10
-  SphereRadius: 3
-  MaxNumOfParticles: 1024
-  implementationType: 1
+  HyperElasticHardening: 15
+  SphereRadius: 10
+  MaxNumOfParticles: 9709
+  implementationType: 2
 --- !u!114 &522039639
 MonoBehaviour:
   m_ObjectHideFlags: 0

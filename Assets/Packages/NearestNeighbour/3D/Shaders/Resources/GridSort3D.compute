@@ -5,7 +5,7 @@
 //#pragma kernel CopyBuffer
 
 //#define SIMULATION_BLOCK_SIZE 256
-#define SIMULATION_BLOCK_SIZE 64
+#define SIMULATION_BLOCK_SIZE 256
 
 #include "NearestNeighbour3D.hlsl"
 

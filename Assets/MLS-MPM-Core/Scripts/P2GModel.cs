@@ -311,10 +311,10 @@ namespace MlsMpm
 
             //Here
             //たぶんここはバグってる
-            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
-                ShaderID.SortedP2GMassBuffer, this.sortedP2gMassBuffer);
             //this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
-            //    ShaderID.SortedP2GMassBuffer, this.p2gMassBuffer);
+            //    ShaderID.SortedP2GMassBuffer, this.sortedP2gMassBuffer);
+            this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
+                ShaderID.SortedP2GMassBuffer, this.p2gMassBuffer);
 
             this.p2gScatteringOptCS.SetBuffer(this.gatherAndWriteKernel.Index,
                 GpuMpmParticleSystem.ShaderID.GridBuffer, this.mediator.GridBuffer);

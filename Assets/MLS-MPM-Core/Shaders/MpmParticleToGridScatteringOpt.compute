@@ -15,8 +15,8 @@
 #include "./Grid.hlsl"
 #include "./SVD.hlsl"
 
-//#define THREAD_1D 256
-#define THREAD_1D 64
+#define THREAD_1D 256
+//#define THREAD_1D 64
 
 float _DeltaTime;
 uint _NumOfParticles;
@@ -64,7 +64,7 @@ void ClearBuffers(uint3 DTid : SV_DispatchThreadID)
 	_GridPingPongBuffer[laneId] = uint2(0, 0);
 	P2GMass p2gMass;
 	p2gMass.mass = 0;
-	p2gMass.mass_x_velocity = 0;
+	p2gMass.mass_x_velocity = float3(0,0,0);
 	_P2GMassBuffer[laneId] = p2gMass;
 	_BoundaryAndIntervalBuffer[laneId] = uint2(0,0);
 }
@@ -290,15 +290,15 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	if (boundary)
 	{
 		//LockMpmCell cell = _LockGridBuffer[cellIndex];
-		//cell.mass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
-		//cell.mass_x_velocity = (int) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
+		//cell.mass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT_1);
+		//cell.mass_x_velocity = (int) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT_1);
 		//_LockGridBuffer[cellIndex] = cell; //AtomicAdd is applied
 
-		int intMass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT);
-		//int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT);
-		int intMassXVelocityX = (int) (blockP2gMass[GI].mass_x_velocity.x * FLOAT_TO_INT_DIGIT);
-		int intMassXVelocityY = (int) (blockP2gMass[GI].mass_x_velocity.y * FLOAT_TO_INT_DIGIT);
-		int intMassXVelocityZ = (int) (blockP2gMass[GI].mass_x_velocity.z * FLOAT_TO_INT_DIGIT);
+		int intMass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT_1);
+		//int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT_1);
+		int intMassXVelocityX = (int) (blockP2gMass[GI].mass_x_velocity.x * FLOAT_TO_INT_DIGIT_1);
+		int intMassXVelocityY = (int) (blockP2gMass[GI].mass_x_velocity.y * FLOAT_TO_INT_DIGIT_1);
+		int intMassXVelocityZ = (int) (blockP2gMass[GI].mass_x_velocity.z * FLOAT_TO_INT_DIGIT_1);
 		InterlockedAdd(_LockGridBuffer[cellIndex].mass, intMass);
 		InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, intMassXVelocityX);
 		InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, intMassXVelocityY);

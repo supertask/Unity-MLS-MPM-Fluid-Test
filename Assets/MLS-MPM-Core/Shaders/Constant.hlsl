@@ -16,8 +16,11 @@
 #define TYPE__FLUID 3
 
 // For InterlockedAdd with float value
-#define FLOAT_TO_INT_DIGIT 100000
-#define INT_TO_FLOAT_DIGIT (1.0 / (float)FLOAT_TO_INT_DIGIT)
+#define F2I_DIGIT 1000
+#define F2I_DIGIT_2SQRT F2I_DIGIT * F2I_DIGIT 
+
+#define FLOAT_TO_INT_DIGIT_1 100000
+#define INT_TO_FLOAT_DIGIT_1 (1.0 / (float)FLOAT_TO_INT_DIGIT_1)
 
 static const float4x4 Identity =
 {

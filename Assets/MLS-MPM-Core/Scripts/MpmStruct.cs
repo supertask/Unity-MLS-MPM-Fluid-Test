@@ -51,13 +51,15 @@ namespace MlsMpm
     public struct LockMpmCell
     {
         public int mass;
+        public int mass2;
         public int3 mass_x_velocity;
+        public int3 mass_x_velocity2;
         public float3 velocity;
         public float3 force;
         public float2 padding;
 
         public override string ToString() {
-            return $"LockMpmCell(mass={mass}, mass_x_velocity={mass_x_velocity}, velocity={velocity}, force={force}, padding={padding})";
+            return $"LockMpmCell(mass={mass}, mass2={mass2}, mass_x_velocity={mass_x_velocity}, mass_x_velocity2={mass_x_velocity2}, velocity={velocity}, force={force}, padding={padding})";
         }
     };
 

@@ -23,9 +23,11 @@ void InitGrid(uint3 DTid : SV_DispatchThreadID)
 	//LockMpmCell cell = _GridBuffer[idx];
 
 	cell.mass = 0;
-	cell.mass_x_velocity = 0;
-	cell.force = 0;
-	cell.velocity = 0;
+	cell.mass2 = 0;
+	cell.mass_x_velocity = int3(0,0,0);
+	cell.mass_x_velocity2 = int3(0,0,0);
+	cell.force = float3(0,0,0);
+	cell.velocity = float3(0,0,0);
 
 	#if defined(LScattering) || defined(LFScattering)
 		_LockGridBuffer[idx] = cell;

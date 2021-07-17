@@ -31,11 +31,16 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
 
 	uint3 cidx = CellIndex1DTo3D(idx);
 
-    #if defined(LScattering) || defined(LFScattering)
-        //float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT;
-        //float3 mass_x_velocity = ((float3)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT;
-        float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT;
-        float3 mass_x_velocity = ((float3)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT;
+    #if defined(LScattering)
+        //float mass = ConvertInt2ToFloat(int2(cell.mass, cell.mass2));
+        //float3 mass_x_velocity = ConvertInt3x2ToFloat3(cell.mass_x_velocity, cell.mass_x_velocity2);
+        float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
+        float3 mass_x_velocity = ((float3)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT_1;
+    #elif defined(LFScattering)
+        //float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT_1;
+        //float3 mass_x_velocity = ((float3)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT_1;
+        float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
+        float3 mass_x_velocity = ((float3)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT_1;
     #else
         float mass = cell.mass;
         float3 mass_x_velocity = cell.mass_x_velocity;
@@ -45,15 +50,17 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
 
     if (mass <= 0)
     {
-		cell.force = 0;
         cell.mass = 0;
-        cell.mass_x_velocity = 0;
-        cell.velocity = 0;
+        cell.mass2 =0;
+        cell.mass_x_velocity = int3(0,0,0);
+        cell.mass_x_velocity2 = int3(0,0,0);
+        cell.velocity = float3(0,0,0);
+        cell.force = float3(0,0,0);
     }
     else
     {
-        //float mass = cell.mass * INT_TO_FLOAT_DIGIT;
-        //float3 mass_x_velocity = cell.mass_x_velocity * INT_TO_FLOAT_DIGIT;
+        //float mass = cell.mass * INT_TO_FLOAT_DIGIT_1;
+        //float3 mass_x_velocity = cell.mass_x_velocity * INT_TO_FLOAT_DIGIT_1;
 
         cell.velocity = mass_x_velocity / mass;
         //cell.velocity = float3(0,-1,0);

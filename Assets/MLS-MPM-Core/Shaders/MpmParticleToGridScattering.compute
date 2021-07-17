@@ -95,15 +95,34 @@ void P2GScattering(uint3 DTid : SV_DispatchThreadID)
 					float mass = weight * particle.mass;
 					float3 mass_x_velocity = weight * (particle.mass * particle.velocity
 						+ mul(apic, (gridPositionWS - particle.position)));
-					InterlockedAdd(_LockGridBuffer[cellIndex].mass, (int)(mass * FLOAT_TO_INT_DIGIT) );
-					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT) );
-					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT) );
-					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.z, (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT) );
+					//int2 splitMass = ConvertFloatToInt2(mass);
+					//int2 splitMassXVelocityX = ConvertFloatToInt2(mass_x_velocity.x);
+					//int2 splitMassXVelocityY = ConvertFloatToInt2(mass_x_velocity.y);
+					//int2 splitMassXVelocityZ = ConvertFloatToInt2(mass_x_velocity.z);
 
-					//_LockGridBuffer[cellIndex].mass += (int)(mass * FLOAT_TO_INT_DIGIT);
-					//_LockGridBuffer[cellIndex].mass_x_velocity.x += (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT);
-					//_LockGridBuffer[cellIndex].mass_x_velocity.y += (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT);
-					//_LockGridBuffer[cellIndex].mass_x_velocity.z += (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT);
+					//Add Mass
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass, (int)(mass * FLOAT_TO_INT_DIGIT_1) );
+
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass, splitMass.x);
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass2, splitMass.y);
+
+					//Add Mass x velocity
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT_1) );
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT_1) );
+					InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.z, (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT_1) );
+
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.x, splitMassXVelocityX.x );
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity2.x, splitMassXVelocityX.y );
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.y, splitMassXVelocityY.x );
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity2.y, splitMassXVelocityY.y );
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity.z, splitMassXVelocityZ.x );
+					//InterlockedAdd(_LockGridBuffer[cellIndex].mass_x_velocity2.z, splitMassXVelocityZ.y );
+
+
+					//_LockGridBuffer[cellIndex].mass += (int)(mass * FLOAT_TO_INT_DIGIT_1);
+					//_LockGridBuffer[cellIndex].mass_x_velocity.x += (int)(mass_x_velocity.x * FLOAT_TO_INT_DIGIT_1);
+					//_LockGridBuffer[cellIndex].mass_x_velocity.y += (int)(mass_x_velocity.y * FLOAT_TO_INT_DIGIT_1);
+					//_LockGridBuffer[cellIndex].mass_x_velocity.z += (int)(mass_x_velocity.z * FLOAT_TO_INT_DIGIT_1);
 				}
 			}
 		}

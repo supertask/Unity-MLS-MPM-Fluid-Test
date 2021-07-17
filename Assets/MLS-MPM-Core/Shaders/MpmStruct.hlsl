@@ -22,7 +22,14 @@ struct MpmCell {
 
 struct LockMpmCell {
     int mass;
+    int mass2;
     int3 mass_x_velocity;
+    int3 mass_x_velocity2;
+
+    //int2 mass_pack;
+    //int2 mass_x_velocity_x_pack;
+    //int2 mass_x_velocity_y_pack;
+    //int2 mass_x_velocity_z_pack;
     float3 velocity;
     float3 force;
 	float2 padding;
