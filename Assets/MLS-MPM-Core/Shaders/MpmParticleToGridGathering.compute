@@ -7,6 +7,7 @@
 #include "./SVD.hlsl"
 
 #define THREAD_1D 256
+//#define THREAD_1D 1024
 
 float _DeltaTime;
 int _NumOfParticles;
@@ -91,14 +92,14 @@ void P2GGathering(uint3 DTid : SV_DispatchThreadID)
 				for(int gz = -1; gz <=1; ++gz)
 				{
 					int3 delta = int3(gx,gy,gz);
-					int3 cid = gidx + delta;
+					int3 cellIndex3D = gidx + delta;
 
-					uint idx = CellIndex3DTo1D(cid);
-					if(CellID != idx) continue;
+					uint cellIndex1D = CellIndex3DTo1D(cellIndex3D);
+					if(CellID != cellIndex1D) continue;
 
-					if (InGrid(cid))
+					if (InGrid(cellIndex3D))
 					{
-						float3 gridPosition = CellIndex3DToPositionWS(cid);
+						float3 gridPosition = CellIndex3DToPositionWS(cellIndex3D);
 						float weight = GetWeight(particle.position, delta);
 
 						cell.mass += weight * particle.mass;

@@ -15,7 +15,9 @@
 #include "./Grid.hlsl"
 #include "./SVD.hlsl"
 
-#define THREAD_1D 256
+#define THREAD_1D 1024
+#define THREAD_GATHER_1D 512
+//#define THREAD_1D 256
 //#define THREAD_1D 64
 
 float _DeltaTime;
@@ -236,7 +238,7 @@ void BoundaryAndInterval(
 }
 
 
-groupshared P2GMass blockP2gMass[THREAD_1D * 2];
+groupshared P2GMass blockP2gMass[THREAD_GATHER_1D * 2];
 //groupshared float blockMass[128];
 //groupshared float3 blockMassXVelocity[128];
 
@@ -246,7 +248,7 @@ groupshared P2GMass blockP2gMass[THREAD_1D * 2];
 //	uint3 GTid : SV_GroupThreadID,
 //	uint  GI : SV_GroupIndex)
 //{
-[numthreads(THREAD_1D,1,1)]
+[numthreads(THREAD_GATHER_1D,1,1)]
 void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 {
 	//
@@ -275,7 +277,7 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 	P2GMass p2gMass = _SortedP2GMassBuffer[massIndex];
 	blockP2gMass[GI] = p2gMass;
 	GroupMemoryBarrierWithGroupSync();
-	for(uint stride = 1; stride < THREAD_1D; stride <<= 1)
+	for(uint stride = 1; stride < THREAD_GATHER_1D; stride <<= 1)
 	{
 		if (stride <= regionInterval) {
 			// stride <= interval

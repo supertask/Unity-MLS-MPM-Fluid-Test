@@ -16,12 +16,12 @@ namespace Sorting.BitonicSort
         protected ComputeShader BitonicCS;
         private Kernel bitonicSortKernel, matrixTransposeKernel;
 
-        int numElements;
+        //int numElements;
 
         public BitonicSort(int numElements)
         {
             this.BitonicCS = (ComputeShader)Resources.Load("BitonicSortCS");
-            this.SetNumElements(numElements);
+            //this.SetNumElements(numElements);
             this.bitonicSortKernel = new Kernel(this.BitonicCS, "BitonicSort");
             this.matrixTransposeKernel = new Kernel(this.BitonicCS, "MatrixTranspose");
             this.BITONIC_BLOCK_SIZE = this.bitonicSortKernel.ThreadX;
@@ -29,6 +29,7 @@ namespace Sorting.BitonicSort
             Debug.LogFormat("BITONIC_BLOCK_SIZE = {0}, TRANSPOSE_BLOCK_SIZE = {1}", BITONIC_BLOCK_SIZE, TRANSPOSE_BLOCK_SIZE);
         }
 
+        /*
         public void SetNumElements(int numElements) {
             if (numElements % 2 == 0 && numElements > 0) {
                 this.numElements = numElements;
@@ -36,6 +37,7 @@ namespace Sorting.BitonicSort
                 throw new Exception("A num of object has be '2 ^ x' !!");
             }
         }
+        */
 
         public void Sort(ref ComputeBuffer inBuffer, ref ComputeBuffer tempBuffer)
         {
@@ -46,7 +48,8 @@ namespace Sorting.BitonicSort
             int KERNEL_ID_BITONICSORT = this.bitonicSortKernel.Index;
             int KERNEL_ID_TRANSPOSE = this.matrixTransposeKernel.Index;
 
-            uint NUM_ELEMENTS = (uint)numElements;
+            //uint NUM_ELEMENTS = (uint)numElements;
+            uint NUM_ELEMENTS = (uint)inBuffer.count;
             uint MATRIX_WIDTH = BITONIC_BLOCK_SIZE;
             uint MATRIX_HEIGHT = (uint)NUM_ELEMENTS / BITONIC_BLOCK_SIZE;
             //Debug.LogFormat("elments = {0}, blockH = {1}, blockW {2}", NUM_ELEMENTS, MATRIX_HEIGHT, MATRIX_WIDTH);

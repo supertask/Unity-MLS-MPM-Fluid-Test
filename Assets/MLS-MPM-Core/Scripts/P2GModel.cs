@@ -196,8 +196,12 @@ namespace MlsMpm
 
             //存在しないやつ
             int startIndex = 1024*20;
-            //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+3);
-            //Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, startIndex, startIndex+3);
+
+            if (Input.GetKeyDown(KeyCode.Space)) {
+                Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+100);
+                //Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, startIndex, startIndex+3);
+                Debug.Log("----------");
+            }
 
             //
             // 2. bitonic sort for Particles To Grid
@@ -214,8 +218,10 @@ namespace MlsMpm
 
 
             //Debug.Log(numOfP2GMasses);
-            //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+3);
-            //Util.DebugBuffer<P2GMass>(this.sortedP2gMassBuffer, startIndex, startIndex+3);
+            if (Input.GetKeyDown(KeyCode.Space)) {
+                Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+100);
+                //Util.DebugBuffer<P2GMass>(this.sortedP2gMassBuffer, startIndex, startIndex+3);
+            }
 
             // 3. Calc boundary and region interval for No.4
             this.ComputeBoundaryAndInterval();

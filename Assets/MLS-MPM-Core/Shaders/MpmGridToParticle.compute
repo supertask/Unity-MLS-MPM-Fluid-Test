@@ -5,7 +5,8 @@
 #include "./Grid.hlsl"
 #include "./SVD.hlsl"
 
-#define THREAD_1D 256
+//#define THREAD_1D 256
+#define THREAD_1D 1024
 
 float _DeltaTime;
 

@@ -14,7 +14,8 @@ public abstract class GridOptimizerBase {
 
     protected int numObjects;
 
-    BitonicSort bitonicSort;
+    //BitonicSort bitonicSort;
+    FastestBitonicSort bitonicSort;
 
 
     protected ComputeShader GridSortCS;
@@ -33,13 +34,16 @@ public abstract class GridOptimizerBase {
 
         //this.threadGroupSize = Mathf.CeilToInt(numObjects / SIMULATION_BLOCK_SIZE_FOR_GRID);
 
-        this.bitonicSort = new BitonicSort(numObjects);
+        //this.bitonicSort = new BitonicSort();
+        this.bitonicSort = new FastestBitonicSort();
     }
 
     #region Accessor
+    /*
     public void SetNumObjects(int numObjects) {
         this.bitonicSort.SetNumElements(numObjects);
     }
+    */
     public float GetGridH() {
         return gridH;
     }
@@ -71,7 +75,7 @@ public abstract class GridOptimizerBase {
     //output: gridAndMassIdsBuffer, sortedP2gMassBuffer
     public void GridSort(
         ComputeBuffer gridAndMassIdsBuffer,
-        ComputeBuffer gridPingPongBuffer2,
+        ComputeBuffer localGridPingPongBuffer2,
         ComputeBuffer p2gMassBuffer,
         ComputeBuffer sortedP2gMassBuffer) {
 
@@ -123,7 +127,8 @@ public abstract class GridOptimizerBase {
         //
         //これがないと状態(コメントアウトする状態)だと，確実にバグる
         //ある状態でも，たまにバグる
-        bitonicSort.Sort(ref gridAndMassIdsBuffer, ref gridPingPongBuffer);
+        //bitonicSort.Sort(ref gridAndMassIdsBuffer, ref localGridPingPongBuffer2);
+        bitonicSort.Sort(ref gridAndMassIdsBuffer);
 
         //startIndex = 1024*20;
         //Util.DebugBuffer<uint2>(gridAndMassIdsBuffer, startIndex, startIndex+5);
@@ -169,7 +174,8 @@ public abstract class GridOptimizerBase {
         //GridSortCS.SetBuffer(kernel, "_SortedP2GMassBuffer", sortedP2gMassBuffer);
         //GridSortCS.Dispatch(kernel, threadGroupSize, 1, 1);
 
-        //ここでたまに落ちるようになっている
+
+        /*
         this.rearrangeParticlesKernel = new Kernel(this.GridSortCS, "RearrangeParticlesCS");
         GridSortCS.SetBuffer(this.rearrangeParticlesKernel.Index, "_GridAndMassIdsBuffer", gridAndMassIdsBuffer);
         GridSortCS.SetBuffer(this.rearrangeParticlesKernel.Index, "_P2GMassBuffer", p2gMassBuffer);
@@ -178,6 +184,7 @@ public abstract class GridOptimizerBase {
             Mathf.CeilToInt(this.numObjects /  (float)rearrangeParticlesKernel.ThreadX),
             (int)this.rearrangeParticlesKernel.ThreadY,
             (int)this.rearrangeParticlesKernel.ThreadZ);
+        */
 
         #endregion GridOptimization
 

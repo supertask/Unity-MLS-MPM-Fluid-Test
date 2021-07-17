@@ -3,10 +3,23 @@
 
 // IMPORTANT: when you change this parameters on GPU,
 // you also need to change parameters on C#
-#define BITONIC_BLOCK_SIZE 512
-#define TRANSPOSE_BLOCK_SIZE 16
-//#define BITONIC_BLOCK_SIZE 64
-//#define TRANSPOSE_BLOCK_SIZE 16
+#define BITONIC_BLOCK_SIZE 1024
+#define TRANSPOSE_BLOCK_SIZE 32
+
+//64 * 2 = 128
+//64 * 64 = 4096
+
+//128 * 4 = 512
+//128 * 128 = 16384
+
+//256 * 8 = 2048
+//256 * 256 = 65536
+
+//512 * 16 = 8192
+//512 * 512 = 262144
+
+//1024 * 32 = 32768
+//1024 * 1024 = 1048576
 
 cbuffer cb
 {

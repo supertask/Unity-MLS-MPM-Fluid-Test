@@ -401,6 +401,36 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridDepth
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridWidth
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridHeight
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: SphereRadius
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridSpacingH
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: MaxNumOfParticles
+      value: 77672
+      objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: m_Name

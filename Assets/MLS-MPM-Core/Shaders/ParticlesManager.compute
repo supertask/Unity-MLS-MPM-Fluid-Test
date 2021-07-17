@@ -7,7 +7,8 @@
 #include "./Grid.hlsl"
 #include "./SVD.hlsl"
 
-#define THREAD_1D 256
+//#define THREAD_1D 256
+#define THREAD_1D 1024
 #define EMIT_PARTICLE_THREAD_1D 8
 
 #define SEED PI
@@ -62,7 +63,7 @@ void InitParticles(uint3 DTid : SV_DispatchThreadID)
 	uint idx = DTid.x;
 
 	//TODO アクティブではないやつがある
-	_ParticlesBuffer[idx].position = float3(idx*0.1, 0, 0);
+	_ParticlesBuffer[idx].position = float3(0, 0, 0);
 	//_ParticlesBuffer[idx].position = randomPosOnSphere(idx);
 	_ParticlesBuffer[idx].type = TYPE__INACTIVE;
 
