@@ -56,11 +56,11 @@ MonoBehaviour:
   gridWidth: 64
   gridHeight: 64
   gridDepth: 64
-  YoungsModulusE: 500
+  YoungsModulusE: 14000
   PoissonRatioNu: 0.2
-  HyperElasticHardening: 15
-  SphereRadius: 10
-  MaxNumOfParticles: 9709
+  HyperElasticHardening: 10
+  SphereRadius: 5
+  MaxNumOfParticles: 77672
   implementationType: 2
 --- !u!114 &522039639
 MonoBehaviour:

@@ -60,7 +60,7 @@ void GridToParticle(uint3 DTid : SV_DispatchThreadID)
     particle.position = clamp(particle.position,
 		_CellStartPos,
 		float3(_GridResolutionWidth,_GridResolutionHeight,_GridResolutionDepth) * _GridSpacingH - _CellStartPos
-		);
+	);
 
     float3x3 F = particle.Fe;
     F = mul(Identity3x3 + _DeltaTime * particle.C, F);
@@ -81,7 +81,8 @@ void GridToParticle(uint3 DTid : SV_DispatchThreadID)
 		float oldj = determinant(F);
 		F = mul(mul(U, D),transpose(V));
 
-		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.6f, 10.0f);
+		//particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.6f, 10.0f);
+		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.8f, 1.2f);
 	//}
 	//else if(particle.type == 3)
 	//{

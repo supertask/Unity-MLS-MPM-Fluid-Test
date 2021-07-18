@@ -15,6 +15,9 @@
 #define TYPE__SNOW 2
 #define TYPE__FLUID 3
 
+#define DEFAULT_MASS 1
+#define DEFAULT_VOLUME 1
+
 // For InterlockedAdd with float value
 #define F2I_DIGIT 1000
 #define F2I_DIGIT_2SQRT F2I_DIGIT * F2I_DIGIT 
