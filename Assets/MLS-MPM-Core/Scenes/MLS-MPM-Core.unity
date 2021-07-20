@@ -401,10 +401,13 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
-        type: 3}
-      propertyPath: snowThetaS
-      value: 0.0005
+    - target: {fileID: 522039639, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 522039640, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
@@ -468,3 +471,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f0c6d54cc3694a24a8ec52cb84c55fda, type: 3}
+--- !u!1 &3423424998925167425 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+    type: 3}
+  m_PrefabInstance: {fileID: 3423424998925167424}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3423424998925167426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423424998925167425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee88a315406983f4496635e2ea204de7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 7cc633ec1ab6d1b43889eb4d44ae5506, type: 2}
+  particleSize: 0.2
+  tex: {fileID: 2800000, guid: 995fa875c367b3b4b851a6db3a61af07, type: 3}
+  color: {r: 0.6156863, g: 0.3372549, b: 0.06666667, a: 0.7607843}

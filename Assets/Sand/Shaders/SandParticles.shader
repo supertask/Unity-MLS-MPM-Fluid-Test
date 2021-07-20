@@ -1,10 +1,14 @@
-﻿Shader "Unlit/MpmGrid"
+﻿Shader "Unlit/Sand"
 {
+	Properties
+    {
+        _MainTex("Main Texture", 2D) = "white" {}
+        _SandTex("Light mask A1 Texture", 2D) = "white" {}
+	}
+
 	CGINCLUDE
 	#include "UnityCG.cginc"
-	#include "Constant.hlsl"
-	#include "MpmStruct.hlsl"
-	#include "Grid.hlsl"
+	#include "Assets/MLS-MPM-Core/Shaders/MpmStruct.hlsl"
 
 	struct v2g
 	{
@@ -19,28 +23,15 @@
 		float4 color    : COLOR;
 	};
 
+	StructuredBuffer<MpmParticle> _ParticlesBuffer;
 	sampler2D _MainTex;
 	float4    _MainTex_ST;
-	float     _DebugObjectSize;
+	sampler2D _SandTex;
+	float4    _SandTex_ST;
 
 
-	//#if defined(LScattering) || defined(LFScattering)
-	//	StructuredBuffer<LockMpmCell> _LockGridBuffer;
-	//#else
-	//	StructuredBuffer<MpmCell> _GridBuffer;
-	//#endif
-	
-	StructuredBuffer<MpmCell> _GridBuffer;
-	StructuredBuffer<LockMpmCell> _LockGridBuffer;
-
-	/*
-	int     _GridResolutionWidth;
-	int     _GridResolutionHeight;
-	int     _GridResolutionDepth;
-	float     _CellSpacingSize;
-	float3     _CellStartPos;
-	*/
-
+	float4     _Color;
+	float     _ParticleSize;
 	float4x4  _InvViewMatrix;
 	static const float3 g_positions[4] =
 	{
@@ -66,40 +57,16 @@
 	// --------------------------------------------------------------------
 	// Vertex Shader
 	// --------------------------------------------------------------------
-	v2g vert(uint cellIndex : SV_VertexID) // SV_VertexID:
+	v2g vert(uint id : SV_VertexID) // SV_VertexID:
 	{
 		v2g o = (v2g)0;
-		int3 cellIndex3D = CellIndex1DTo3D(cellIndex);
-		float3 cellPositionWS = CellIndex3DToPositionWS(cellIndex3D);
-		//MpmCell cell = _GridBuffer[cellIndex];
-		//float mass = cell.mass;
-		//LockMpmCell cell = _GridBuffer[cellIndex];
-
-		#if defined(LScattering) || defined(LFScattering)
-			LockMpmCell cell = _LockGridBuffer[cellIndex];
-			float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
-		#else
-			MpmCell cell = _GridBuffer[cellIndex];
-			float mass = cell.mass;
-		#endif
-
-		//LockMpmCell cell = _GridBuffer[cellIndex];
-		//float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
-
-
-		o.position = cellPositionWS;
+		MpmParticle particle = _ParticlesBuffer[id];
+		o.position = particle.position;
+		//o.position = random(float2(id, 0));
 		//o.color = random(float2(id, 0));
-		o.color = mass > 0 ? float4(1,0,0,1) : float4(1,1,1,1);
-		//o.size = mass > 0 ? mass * _DebugObjectSize : _DebugObjectSize;
-		o.size = mass * _DebugObjectSize;
-
-
-		//if (cellIndex > 64 * 64 * 60 ) {
-		//if (cellIndex < 10000) {
-		//	o.color = float4(0,1,0,1);
-		//	//o.size = 1;
-		//}
-
+		o.color = 1;
+		//o.size = particle.type > 0 ? _ParticleSize : 0;
+		o.size = _ParticleSize;
 		return o;
 	}
 
@@ -128,18 +95,28 @@
 	// --------------------------------------------------------------------
 	fixed4 frag(g2f i) : SV_Target
 	{
-		return tex2D(_MainTex, i.uv.xy) * i.color;
+		return tex2D(_MainTex, i.uv.xy * 0.25 + 0.25) * _Color;//  * i.color;
+		//return tex2D(_SandTex, i.uv.xy * 0.25) * _Color; // * i.color;
+		//return float4(0,1,0,1);
 		//return i.color;
 	}
 	ENDCG
 
 	SubShader
 	{
-		Tags{ "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
+		Tags{
+			"Queue"="Transparent"
+			"RenderType" = "Transparent"
+			//"Queue"="Geometry"
+			//"RenderType" = "Opaque"
+			"IgnoreProjector" = "True"
+		}
 		LOD 100
 
+		//Blend One One
 		ZWrite Off
-		Blend One One
+        Blend SrcAlpha OneMinusSrcAlpha
+        //Cull front 
 
 		Pass
 		{
