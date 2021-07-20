@@ -1,0 +1,4 @@
+[submodule "Assets/Packages/-f"]
+	path = Assets/Packages/-f
+	url = git@github.com:supertask/ShaderLib.git
+	branch = main
