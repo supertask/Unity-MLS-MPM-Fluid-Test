@@ -82,7 +82,7 @@ void GridToParticle(uint3 DTid : SV_DispatchThreadID)
 		F = mul(mul(U, D),transpose(V));
 
 		//particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.6f, 10.0f);
-		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.8f, 1.2f);
+		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.99f, 2.4f);
 	//}
 	//else if(particle.type == 3)
 	//{

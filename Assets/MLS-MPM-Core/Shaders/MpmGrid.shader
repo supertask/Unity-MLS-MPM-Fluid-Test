@@ -92,6 +92,14 @@
 		o.color = mass > 0 ? float4(1,0,0,1) : float4(1,1,1,1);
 		//o.size = mass > 0 ? mass * _DebugObjectSize : _DebugObjectSize;
 		o.size = mass * _DebugObjectSize;
+
+
+		//if (cellIndex > 64 * 64 * 60 ) {
+		if (cellIndex < 10000) {
+			o.color = float4(0,1,0,1);
+			//o.size = 1;
+		}
+
 		return o;
 	}
 

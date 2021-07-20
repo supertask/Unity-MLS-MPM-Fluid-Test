@@ -190,17 +190,19 @@ namespace MlsMpm
             this.ClearBuffers();
 
             //存在するやつ
-            //Util.DebugBuffer<MpmParticle>(this.mediator.ParticlesBuffer, 0, 3);
-            //Util.DebugBuffer<int3>(this.cellNeighbourBuffer, 1, 3);
+            if (Input.GetKeyDown(KeyCode.Space)) {
+                //Util.DebugBuffer<MpmParticle>(this.mediator.ParticlesBuffer, 0, 100);
+                Debug.Log("----------");
+            }
             this.ComputeP2GMass();
 
             //存在しないやつ
             int startIndex = 1024*20;
 
             if (Input.GetKeyDown(KeyCode.Space)) {
-                Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+100);
+                //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 0, 1);
                 //Util.DebugBuffer<P2GMass>(this.p2gMassBuffer, startIndex, startIndex+3);
-                Debug.Log("----------");
+                //Debug.Log("----------");
             }
 
             //
@@ -219,8 +221,9 @@ namespace MlsMpm
 
             //Debug.Log(numOfP2GMasses);
             if (Input.GetKeyDown(KeyCode.Space)) {
-                Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, startIndex, startIndex+100);
+                //Util.DebugBuffer<uint2>(this.gridAndMassIdsBuffer, 0, 1);
                 //Util.DebugBuffer<P2GMass>(this.sortedP2gMassBuffer, startIndex, startIndex+3);
+                Debug.Log("----------");
             }
 
             // 3. Calc boundary and region interval for No.4
@@ -238,7 +241,7 @@ namespace MlsMpm
                 //Util.DebugBuffer<MpmParticle>(this.mediator.ParticlesBuffer, 100, 113);
                 //Debug.Log("---");
 
-                //Util.DebugBuffer<uint2>(this.gridOptimizer.GetGridIndicesBuffer(), 0, 30);
+                Util.DebugBuffer<uint2>(this.gridOptimizer.GetGridIndicesBuffer(), 0, 1);
                 //Debug.Log("---");
 
                 //Util.DebugBuffer<LockMpmCell>(this.mediator.GridBuffer, 0, 30);

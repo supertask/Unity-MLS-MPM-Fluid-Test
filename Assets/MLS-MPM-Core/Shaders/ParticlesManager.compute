@@ -10,6 +10,7 @@
 //#define THREAD_1D 256
 #define THREAD_1D 1024
 #define EMIT_PARTICLE_THREAD_1D 8
+//#define EMIT_PARTICLE_THREAD_1D 32
 
 #define SEED PI
 
@@ -39,6 +40,13 @@ float3 randomPosOnSphere(int index)
 	// Note: Use uniform random generator instead of noise in your applications
 	float theta = 2.0f * PI * gold_noise(float2(fi * 0.3482f, fi * 2.18622f), SEED);
 	float phi = acos(1.0f - 2.0f * gold_noise(float2(fi * 1.9013, fi * 0.94312), SEED));
+
+	// NOTE(Tasuku): If an amount of cell index "0" is too big, 
+	// increase a value of EPISILON to avoid unexpected (x,y,z).
+	// https://github.com/supertask/Unity-MLS-MPM-Fluid-Test/issues/3
+	theta = clamp(theta, EPSILON, 2 * PI - EPSILON);
+	phi = clamp(phi, EPSILON, 2 * PI - EPSILON);
+
 	float x = sin(phi) * cos(theta);
 	float y = sin(phi) * sin(theta);
 	float z = cos(phi);
@@ -63,7 +71,7 @@ void InitParticles(uint3 DTid : SV_DispatchThreadID)
 	uint idx = DTid.x;
 
 	//TODO アクティブではないやつがある
-	_ParticlesBuffer[idx].position = float3(0, 0, 0);
+	_ParticlesBuffer[idx].position = float3(-1, -1, -1);
 	//_ParticlesBuffer[idx].position = randomPosOnSphere(idx);
 	_ParticlesBuffer[idx].type = TYPE__INACTIVE;
 
@@ -79,11 +87,11 @@ void EmitParticles(uint3 DTid : SV_DispatchThreadID)
 
 	MpmParticle particle = _ParticlesBuffer[idx];
 	particle.type = _ParticleType;
-	particle.mass = (idx == 0) ? 0 : DEFAULT_MASS;
-	particle.volume = (idx == 0) ? 0 : DEFAULT_VOLUME;
-	//particle.position = float3(0, 0, 0); //randomの値を入れる
+	particle.mass = DEFAULT_MASS;
+	particle.volume = DEFAULT_VOLUME;
+	//particle.position = float3(-10000, -10000, -10000); //randomの値を入れる
 	particle.position = _SphereRadius * randomPosOnSphere(idx); //randomの値を入れる
-	//particle.position = random3D(float2(idx, 0)); //randomの値を入れる
+	//particle.position = _SphereRadius * random3D(float2(idx, 0)); //randomの値を入れる
 	particle.velocity = float3(0, 0, 0);
 	particle.C = 0;
 	particle.Fe = Identity3x3;
