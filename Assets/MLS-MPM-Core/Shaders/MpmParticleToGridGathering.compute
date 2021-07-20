@@ -52,12 +52,12 @@ void P2GGathering(uint3 DTid : SV_DispatchThreadID)
 
 
 		float j = determinant(F);
-		//if(particle.type == 2)
-		//{
+		if(particle.type == TYPE__SNOW)
+		{
 			e = exp(_HyperElasticHardening * (1 - particle.Jp));
-		//}
+		}
 		// else
-		// if(particle.type == 3)
+		// if(particle.type == TYPE__FLUID)
 		// {
 		// 	mu = 0;
 		// 	j = particle.Jp;
@@ -69,11 +69,11 @@ void P2GGathering(uint3 DTid : SV_DispatchThreadID)
 
 		float3x3 P = mul((2 * mup * (F - R)), transpose(F)) + lambdap * (j - 1) * j ;
 
-		//if(particle.type == 3)
-		//{
-		//	float s = particle.Jp -1;
-		//	P = float3x3(s,0,0,0,s,0,0,0,s) * mu * 10;
-		//}
+		if(particle.type == TYPE__FLUID)
+		{
+			float s = particle.Jp -1;
+			P = float3x3(s,0,0,0,s,0,0,0,s) * mu * 10;
+		}
 		float3x3 stress = -(_DeltaTime * volume) * mul(Dinv , P);
 		float3x3 apic = stress + particle.mass * particle.C;
 

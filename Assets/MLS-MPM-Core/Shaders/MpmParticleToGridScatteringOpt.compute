@@ -96,34 +96,35 @@ void P2GScatteringOpt(uint3 DTid : SV_DispatchThreadID)
 	float mu = _HyperElasticMu;
 	float lambda = _HyperElasticLambda;
 
-	float j = determinant(F);
-	//if(particle.type == 2)
-	//{
+	float J = determinant(F);
+	if(particle.type == TYPE__SNOW)
+	{
 		e = exp(_HyperElasticHardening * (1 - particle.Jp));
-	//}
+	}
 	// else
-	// if(particle.type == 3)
+	// if(particle.type == TYPE__FLUID)
 	// {
 	// 	mu = 0;
-	// 	j = particle.Jp;
+	// 	J = particle.Jp;
 	// }
 
 	float mup = mu * e;
 	float lambdap = lambda * e;
-	float3x3 P = mul((2 * mup * (F - R)), transpose(F)) + lambdap * (j - 1) * j ;
+	float3x3 PF = mul((2 * mup * (F - R)), transpose(F)) + lambdap * (J - 1) * J ;
 
-	//if(particle.type == 3)
+	//if(particle.type == TYPE__FLUID)
 	//{
 	//	float s = particle.Jp -1;
-	//	P = float3x3(s,0,0,0,s,0,0,0,s) * mu * 10;
+	//	PF = float3x3(s,0,0,0,s,0,0,0,s) * mu * 10;
 	//}
-	float3x3 stress = -(_DeltaTime * volume) * mul(Dinv , P);
+	float3x3 stress = -(_DeltaTime * volume) * mul(Dinv , PF);
 	float3x3 apic = stress + particle.mass * particle.C;
 
-	// j = clamp(j, 0.6f,20.0f);
+
+	// J = clamp(J, 0.6f,20.0f);
 	// float3x3 FinvT = transpose(inverse(F));
-	// float3x3 P = (2.0f * mup * (F - R)) + lambdap * (j - 1.0f) * j * FinvT;
-	// float3x3 stress = 1.0f / j * mul(P, transpose(F));
+	// float3x3 PF = (2.0f * mup * (F - R)) + lambdap * (J - 1.0f) * J * FinvT;
+	// float3x3 stress = 1.0f / J * mul(PF, transpose(F));
 
 	int3 centerCellIndex3D = ParticlePositionToCellIndex3D(particle.position);
 

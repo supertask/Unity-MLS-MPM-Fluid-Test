@@ -9,6 +9,8 @@
 #define THREAD_1D 1024
 
 float _DeltaTime;
+float _ThetaC;
+float _ThetaS;
 
 RWStructuredBuffer<MpmParticle> _ParticlesBufferRead;
 
@@ -65,26 +67,29 @@ void GridToParticle(uint3 DTid : SV_DispatchThreadID)
     float3x3 F = particle.Fe;
     F = mul(Identity3x3 + _DeltaTime * particle.C, F);
 
-	//if(particle.type == 2)
-	//{
-		float3x3 U ;
-		float3 d;
-		float3x3 V;
+	if(particle.type == TYPE__SNOW)
+	{
+		float3x3 svdU ;
+		float3 sig;
+		float3x3 svdV;
 
-		GetSVD3D(F, U, d, V);
+		GetSVD3D(F, svdU, sig, svdV);
 
-		float dl = 1.0f - 2.5e-2f;
-		float du = 1.0f + 4.5e-3f;
-		d = clamp(d, float3(dl,dl,dl), float3(du,du,du));
-		float3x3 D = float3x3(d[0], 0, 0, 0, d[1], 0, 0, 0, d[2]);
+		//Snow plasticity
+		//float dl = 1.0f - 2.5e-2f; //theta c
+		//float du = 1.0f + 4.5e-3f; //theta s
+		float dl = 1.0f - _ThetaC; //theta c
+		float du = 1.0f + _ThetaS; //theta s
+		sig = clamp(sig, float3(dl,dl,dl), float3(du,du,du));
+		float3x3 D = float3x3(sig[0], 0, 0, 0, sig[1], 0, 0, 0, sig[2]);
 		
 		float oldj = determinant(F);
-		F = mul(mul(U, D),transpose(V));
+		F = mul(mul(svdU, D),transpose(svdV));
 
-		//particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.6f, 10.0f);
-		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.99f, 2.4f);
-	//}
-	//else if(particle.type == 3)
+		particle.Jp = clamp(particle.Jp * oldj / determinant(F), 0.6f, 10.0f);
+		//particle.Jp = clamp(particle.Jp * oldj / determinant(F), 1.0f, 3.4f);
+	}
+	//else if(particle.type == TYPE__FLUID)
 	//{
 	//	particle.Jp *= 1 + _DeltaTime * (particle.C[0][0] + particle.C[1][1]);
 	//}

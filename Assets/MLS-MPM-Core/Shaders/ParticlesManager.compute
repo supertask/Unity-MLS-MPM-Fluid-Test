@@ -90,8 +90,8 @@ void EmitParticles(uint3 DTid : SV_DispatchThreadID)
 	particle.mass = DEFAULT_MASS;
 	particle.volume = DEFAULT_VOLUME;
 	//particle.position = float3(-10000, -10000, -10000); //randomの値を入れる
-	particle.position = _SphereRadius * randomPosOnSphere(idx); //randomの値を入れる
-	//particle.position = _SphereRadius * random3D(float2(idx, 0)); //randomの値を入れる
+	//particle.position = _SphereRadius * randomPosOnSphere(idx); //randomの値を入れる
+	particle.position = _SphereRadius * random3D(float2(idx, 0)); //randomの値を入れる
 	particle.velocity = float3(0, 0, 0);
 	particle.C = 0;
 	particle.Fe = Identity3x3;

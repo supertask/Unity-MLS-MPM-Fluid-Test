@@ -2,8 +2,8 @@
 #define CONSTANT_INCLUDED
 
 //#define Gathering
-//#define LScattering
-#define LFScattering
+#define LScattering
+//#define LFScattering
 
 #define PI 3.14159265359
 #define GOLDEN_RATIO 1.61803398874989484820459

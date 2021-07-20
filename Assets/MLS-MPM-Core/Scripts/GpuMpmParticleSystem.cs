@@ -29,7 +29,10 @@ namespace MlsMpm
         [SerializeField] public float HyperElasticHardening = 10.0f; //ポアソン比, Nu -> uppercase Ν, lowercase ν
         [SerializeField] public float SphereRadius = 3;
         [SerializeField] public int MaxNumOfParticles = 1024;
+        [SerializeField] public float snowThetaC = 2.5e-2f;
+        [SerializeField] public float snowThetaS = 4.5e-3f;
         [SerializeField] public ImplementationType implementationType = ImplementationType.LockFreeScattering;
+        [SerializeField] public MpmParticle.Type particleType = MpmParticle.Type.Elastic;
 
         //[SerializeField] protected Grid<Cell> grid;
         #endregion
@@ -71,6 +74,8 @@ namespace MlsMpm
         }
         public static class ShaderID
         {
+            public static int ThetaC = Shader.PropertyToID("_ThetaC");
+            public static int ThetaS = Shader.PropertyToID("_ThetaS");
             public static int GridSpacingH = Shader.PropertyToID("_GridSpacingH");
             public static int GridResolutionWidth = Shader.PropertyToID("_GridResolutionWidth");
             public static int GridResolutionHeight = Shader.PropertyToID("_GridResolutionHeight");
@@ -193,7 +198,7 @@ namespace MlsMpm
             if (this.particleCounts[0] < this.numOfEmitParticles) { return; }
 
             this.particlesManagerCS.SetFloat(ShaderID.SphereRadius, this.SphereRadius);
-            this.particlesManagerCS.SetInt(ShaderID.ParticleType, (int)MpmParticle.Type.Elastic);
+            this.particlesManagerCS.SetInt(ShaderID.ParticleType, (int)this.particleType);
             this.particlesManagerCS.SetBuffer(this.emitParticlesKernel.Index,
                 ShaderID.PoolParticleIndexesBuffer, this.waitingParticleIndexesBuffer);
             this.particlesManagerCS.SetBuffer(this.emitParticlesKernel.Index,
@@ -332,6 +337,8 @@ namespace MlsMpm
         void ComputeGridToParticles()
         {
             this.SetCommonParameters(this.gridToParticlesCS);
+            this.gridToParticlesCS.SetFloat(ShaderID.ThetaS, this.snowThetaS);
+            this.gridToParticlesCS.SetFloat(ShaderID.ThetaC, this.snowThetaC);
             this.gridToParticlesCS.SetBuffer(this.gridToParticlesKernel.Index, ShaderID.ParticlesBufferRead, this.particlesBuffer);
             this.gridToParticlesCS.SetBuffer(this.gridToParticlesKernel.Index, ShaderID.GridBuffer, this.gridBuffer);
             this.gridToParticlesCS.SetBuffer(this.gridToParticlesKernel.Index, ShaderID.LockGridBuffer, this.lockGridBuffer);

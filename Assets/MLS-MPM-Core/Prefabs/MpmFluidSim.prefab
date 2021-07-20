@@ -57,11 +57,14 @@ MonoBehaviour:
   gridHeight: 64
   gridDepth: 64
   YoungsModulusE: 14000
-  PoissonRatioNu: 0.2
-  HyperElasticHardening: 10
+  PoissonRatioNu: 0.1
+  HyperElasticHardening: 5
   SphereRadius: 5
-  MaxNumOfParticles: 77672
-  implementationType: 2
+  MaxNumOfParticles: 70000
+  snowThetaC: 0.025
+  snowThetaS: 0.0005
+  implementationType: 1
+  particleType: 2
 --- !u!114 &522039639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,7 +72,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3423425001010626360}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5494be0a10a74c4f9d2460dd347f77c, type: 3}
   m_Name: 
