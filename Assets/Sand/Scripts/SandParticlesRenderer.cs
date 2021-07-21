@@ -10,15 +10,19 @@ namespace MlsMpm.Sand
     {
         [SerializeField] public Material material;
         [SerializeField] public float particleSize = 0.12f;
+        [SerializeField] public float upresExtendSize = 0.02f;
         [SerializeField] public Texture2D tex;
-        [SerializeField] public Color color;
+        [SerializeField] public Color startColor;
+        [SerializeField] public Color endColor;
         GpuMpmParticleSystem mpmParticleSystem;
         public static class ShaderID
         {
             public static int ParticleSize = Shader.PropertyToID("_ParticleSize");
             public static int InvViewMatrix = Shader.PropertyToID("_InvViewMatrix");
             public static int MainTex = Shader.PropertyToID("_MainTex");
-            public static int Color = Shader.PropertyToID("_Color");
+            public static int StartColor = Shader.PropertyToID("_StartColor");
+            public static int EndColor = Shader.PropertyToID("_EndColor");
+            public static int UpresExtendSize = Shader.PropertyToID("_UpresExtendSize");
         }
 
         void Start()
@@ -44,8 +48,10 @@ namespace MlsMpm.Sand
             }
             this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
             this.material.SetFloat(ShaderID.ParticleSize, this.particleSize);
+            this.material.SetFloat(ShaderID.UpresExtendSize, this.upresExtendSize);
 
-            this.material.SetColor(ShaderID.Color, this.color);
+            this.material.SetColor(ShaderID.StartColor, this.startColor);
+            this.material.SetColor(ShaderID.EndColor, this.endColor);
             this.material.SetTexture(ShaderID.MainTex, this.tex);
             this.material.SetBuffer(GpuMpmParticleSystem.ShaderID.ParticlesBuffer, this.mpmParticleSystem.ParticlesBuffer);
             this.material.SetPass(0);

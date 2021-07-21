@@ -490,6 +490,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 7cc633ec1ab6d1b43889eb4d44ae5506, type: 2}
-  particleSize: 0.2
+  particleSize: 0.06
+  upresExtendSize: 0.35
   tex: {fileID: 2800000, guid: 995fa875c367b3b4b851a6db3a61af07, type: 3}
-  color: {r: 0.6156863, g: 0.3372549, b: 0.06666667, a: 0.7607843}
+  startColor: {r: 0.4528302, g: 0.25459492, b: 0.061943766, a: 1}
+  endColor: {r: 0.7924528, g: 0.4931068, b: 0.2018512, a: 1}
