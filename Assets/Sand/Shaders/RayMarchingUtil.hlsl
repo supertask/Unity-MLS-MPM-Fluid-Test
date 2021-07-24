@@ -1,6 +1,7 @@
 ﻿#include "./RgbToCmyk.hlsl"
 #include "Assets/MLS-MPM-Core/Shaders/MpmStruct.hlsl"
 #include "Assets/MLS-MPM-Core/Shaders/Grid.hlsl"
+#include "Assets/Common/Shaders/PhotoShopMath.hlsl"
 
 #define BUFFER_T LockMpmCell
 #define PHYSICAL_QUANTITY(buffer) ConvertInt2ToFloat(int2(buffer.mass, buffer.mass2))

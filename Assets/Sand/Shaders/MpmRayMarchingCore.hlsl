@@ -180,8 +180,8 @@ float4 volumetricRayMarching(
     #endif
 
     //return lerp(sunLightEneryOnSmoke, sceneColor, smokeTransmittance);
-    return float4(sunLightEneryOnSmoke * sceneColor.rgb, 1.0 - smokeTransmittance)
-        +sceneColor;
+    float4 sandColor = float4(sunLightEneryOnSmoke * sceneColor.rgb, 1.0 - smokeTransmittance);
+    return BlendAlpha(sceneColor, sandColor);
 
     //return lerp(smokeCol, sceneColor, smokeTransmittance);
 
