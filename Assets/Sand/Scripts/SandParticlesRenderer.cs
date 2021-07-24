@@ -9,7 +9,8 @@ namespace MlsMpm.Sand
     public class SandParticlesRenderer : MonoBehaviour
     {
         [SerializeField] public Material material;
-        [SerializeField] public float particleSize = 0.12f;
+        [SerializeField] public float startParticleSize = 0.02f;
+        [SerializeField] public float endParticleSize = 0.06f;
         [SerializeField] public float upresExtendSize = 0.02f;
         [SerializeField] public Texture2D tex;
         [SerializeField] public Color startColor;
@@ -17,7 +18,8 @@ namespace MlsMpm.Sand
         GpuMpmParticleSystem mpmParticleSystem;
         public static class ShaderID
         {
-            public static int ParticleSize = Shader.PropertyToID("_ParticleSize");
+            public static int StartParticleSize = Shader.PropertyToID("_StartParticleSize");
+            public static int EndParticleSize = Shader.PropertyToID("_EndParticleSize");
             public static int InvViewMatrix = Shader.PropertyToID("_InvViewMatrix");
             public static int MainTex = Shader.PropertyToID("_MainTex");
             public static int StartColor = Shader.PropertyToID("_StartColor");
@@ -47,7 +49,8 @@ namespace MlsMpm.Sand
                 inverseViewMatrix = Camera.main.worldToCameraMatrix.inverse;
             }
             this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
-            this.material.SetFloat(ShaderID.ParticleSize, this.particleSize);
+            this.material.SetFloat(ShaderID.StartParticleSize, this.startParticleSize);
+            this.material.SetFloat(ShaderID.EndParticleSize, this.endParticleSize);
             this.material.SetFloat(ShaderID.UpresExtendSize, this.upresExtendSize);
 
             this.material.SetColor(ShaderID.StartColor, this.startColor);

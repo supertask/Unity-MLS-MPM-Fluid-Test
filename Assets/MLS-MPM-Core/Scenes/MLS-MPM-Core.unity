@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 598047359}
   - component: {fileID: 598047358}
   - component: {fileID: 598047357}
+  - component: {fileID: 598047360}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -200,12 +201,39 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 598047356}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -13, z: -49.2}
+  m_LocalPosition: {x: 0, y: -13, z: -46.42}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &598047360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 598047356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa370683a8e3357418b8ab3f81f1de89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shader: {fileID: 4800000, guid: eb3da036aa4616c4ebb1f61dc37d70c1, type: 3}
+  enable: 0
+  mediator: {fileID: 3423424998925167425}
+  mpmPS: {fileID: 3423424998925167429}
+  rayOffsetStrength: 1
+  densityOffset: 0.002
+  smokeAbsorption: 60
+  lightAbsorptionTowardSun: 1.21
+  lightAbsorptionThroughCloud: 0.75
+  darknessThreshold: 0.15
+  forwardScattering: 0.811
+  backScattering: 0.33
+  baseBrightness: 0.9
+  phaseFactor: 0.488
+  fireIntensity: 1
 --- !u!1 &1206029856
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,6 +437,26 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridDepth
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridWidth
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridHeight
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: gridSpacingH
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: m_Name
@@ -490,8 +538,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 7cc633ec1ab6d1b43889eb4d44ae5506, type: 2}
-  particleSize: 0.06
-  upresExtendSize: 0.35
+  startParticleSize: 0.05
+  endParticleSize: 0.09
+  upresExtendSize: 0.2
   tex: {fileID: 2800000, guid: 995fa875c367b3b4b851a6db3a61af07, type: 3}
   startColor: {r: 0.4528302, g: 0.25459492, b: 0.061943766, a: 1}
   endColor: {r: 0.7924528, g: 0.4931068, b: 0.2018512, a: 1}
+--- !u!114 &3423424998925167429 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+    type: 3}
+  m_PrefabInstance: {fileID: 3423424998925167424}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423424998925167425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63c751b0ae7293f488912aa07dde296a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

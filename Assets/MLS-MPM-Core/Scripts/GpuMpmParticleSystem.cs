@@ -152,6 +152,8 @@ namespace MlsMpm
 
         protected void Update()
         {
+            this.transform.rotation = Quaternion.identity;
+
             // Particle Counter
             particleCountBuffer.SetData(this.particleCounts);
             ComputeBuffer.CopyCount(this.waitingParticleIndexesBuffer, particleCountBuffer, 0);

@@ -20,7 +20,7 @@
 	{
 		float3 position : TEXCOORD0;
 		float4 color    : COLOR;
-		float  size : TEXCOORD1;
+		//float  size : TEXCOORD1;
 		float3 viewVector : TEXCOORD2;
 	};
 	struct g2f
@@ -40,7 +40,8 @@
 
 	float4     _StartColor;
 	float4     _EndColor;
-	float     _ParticleSize;
+	float     _StartParticleSize;
+	float     _EndParticleSize;
 	float     _UpresExtendSize;
 	float4x4  _InvViewMatrix;
 	static const float3 neighbourPositions[4] =
@@ -72,7 +73,7 @@
 		//OUT.color = random(float2(id, 0));
 		OUT.color = 1;
 		//OUT.size = particle.type > 0 ? _ParticleSize : 0;
-		OUT.size = _ParticleSize;
+		//OUT.size = _ParticleSize;
 
 		OUT.viewVector = normalize(ObjSpaceViewDir(float4(particle.position, 0)));
 
@@ -85,6 +86,7 @@
 	{
 		g2f OUT = (g2f)0;
 		float3 centerPosition = In[0].position;
+		float particleSize = _StartParticleSize;
 
 		[unroll]
 		for (int i = 0; i < NUM_OF_RECT_VERTEX * NUM_OF_UP_RES; i++)
@@ -93,14 +95,15 @@
 			int pi = (int) (i / NUM_OF_RECT_VERTEX); //particle index, 0 ~ 10
 			OUT.index = pid * pi;
 
-			if ( (vi % NUM_OF_RECT_VERTEX == 0)) {
+			if (vi % NUM_OF_RECT_VERTEX == 0) {
 				SpriteStream.RestartStrip();
+				particleSize = lerp(_StartParticleSize, _EndParticleSize, random(float2(0, OUT.index)));
 			}
 
 			float3 addtionalParticlePos = centerPosition +
 				_UpresExtendSize * randomPosOnSphere(OUT.index, 0); //random3D(float2(pi,0));
 
-			float3 positionWS = neighbourPositions[vi] * In[0].size;
+			float3 positionWS = neighbourPositions[vi] * particleSize;
 			positionWS = mul(_InvViewMatrix, positionWS) + addtionalParticlePos;
 
 			//TODO(Tasuku): テクスチャを回転させる
