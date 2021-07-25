@@ -19,7 +19,7 @@
 #define DEFAULT_VOLUME 1
 
 // For InterlockedAdd with float value
-#define F2I_DIGIT 1000
+#define F2I_DIGIT 1024
 #define F2I_DIGIT_2SQRT F2I_DIGIT * F2I_DIGIT 
 
 #define FLOAT_TO_INT_DIGIT_1 100000

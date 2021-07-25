@@ -77,7 +77,8 @@
 
 		#if defined(LScattering) || defined(LFScattering)
 			LockMpmCell cell = _LockGridBuffer[cellIndex];
-			float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
+			//float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
+			float mass = ConvertInt2ToFloat(int2(cell.mass, cell.mass2));
 		#else
 			MpmCell cell = _GridBuffer[cellIndex];
 			float mass = cell.mass;

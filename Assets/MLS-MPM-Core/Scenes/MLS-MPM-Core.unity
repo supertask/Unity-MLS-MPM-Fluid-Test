@@ -224,7 +224,7 @@ MonoBehaviour:
   mediator: {fileID: 3423424998925167425}
   mpmPS: {fileID: 3423424998925167429}
   rayOffsetStrength: 1
-  densityOffset: 0.003
+  densityOffset: 1
   smokeAbsorption: 60
   lightAbsorptionTowardSun: 1.21
   lightAbsorptionThroughCloud: 0.75

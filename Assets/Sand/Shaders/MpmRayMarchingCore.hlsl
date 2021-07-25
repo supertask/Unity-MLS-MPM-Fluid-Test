@@ -35,7 +35,6 @@ SamplerState samplerFireGradient;
 SamplerState samplerSmokeGradient;
 
 float _SmokeAbsorption, _FireAbsorption; //absorption = 吸収
-StructuredBuffer<BUFFER_T> _GridBuffer;
 //float4 _SmokeColor;
 //float4 _FireColor;
 float _FireIntensity;
@@ -188,6 +187,7 @@ float4 volumetricRayMarching(
     float4 debugColor = sunLightEneryOnSmoke;
     debugColor.a = 1.0 - smokeTransmittance;
     return debugColor;
+    //return sunLightEneryOnSmoke;
 #else
     float4 sandColor = float4(sunLightEneryOnSmoke * sceneColor.rgb, 1.0 - smokeTransmittance);
     return BlendAlpha(sceneColor, sandColor);

@@ -33,14 +33,14 @@ void UpdateGrid(uint3 DTid : SV_DispatchThreadID)
 	uint3 cidx = CellIndex1DTo3D(idx);
 
     #if defined(LScattering)
-        //float mass = ConvertInt2ToFloat(int2(cell.mass, cell.mass2));
+        float mass = ConvertInt2ToFloat(int2(cell.mass, cell.mass2));
         //float3 mass_x_velocity = ConvertInt3x2ToFloat3(cell.mass_x_velocity, cell.mass_x_velocity2);
-        float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
+        //float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
         float3 mass_x_velocity = ((float3)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT_1;
     #elif defined(LFScattering)
-        //float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT_1;
+        float mass = ((float)cell.mass) / FLOAT_TO_INT_DIGIT_1;
         //float3 mass_x_velocity = ((float3)cell.mass_x_velocity) / FLOAT_TO_INT_DIGIT_1;
-        float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
+        //float mass = ((float)cell.mass) * INT_TO_FLOAT_DIGIT_1;
         float3 mass_x_velocity = ((float3)cell.mass_x_velocity) * INT_TO_FLOAT_DIGIT_1;
     #else
         float mass = cell.mass;

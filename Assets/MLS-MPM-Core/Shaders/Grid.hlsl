@@ -24,10 +24,13 @@ float _GridSpacingH;
 //     
 // BTW max value of int: 2147483647
 //
-int2 ConvertFloatToInt2(float v) {
-	float i1 = v * F2I_DIGIT;
-	float i2 = frac(i1) * F2I_DIGIT; 
-	return int2( (int)i1, (int)i2 );
+int2 ConvertFloatToInt2(float v)
+{
+	float f1 = v * F2I_DIGIT;
+    int i1 = (int)f1;
+	float f2 = (f1 - i1) * F2I_DIGIT; 
+    int i2 = (int)f2;
+	return int2( i1, i2 );
 }
 
 float ConvertInt2ToFloat(int2 v) {
@@ -35,7 +38,6 @@ float ConvertInt2ToFloat(int2 v) {
 	float f2 = ((float)v.y) / (F2I_DIGIT * F2I_DIGIT);
 	return f1 + f2;
 }
-
 
 float3 ConvertInt3x2ToFloat3(int3 v1, int3 v2) {
 	return float3(
