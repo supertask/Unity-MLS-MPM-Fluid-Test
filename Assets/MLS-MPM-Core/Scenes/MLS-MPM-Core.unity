@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.40580174, g: 0.42778623, b: 0.43186882, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -224,7 +224,7 @@ MonoBehaviour:
   mediator: {fileID: 3423424998925167425}
   mpmPS: {fileID: 3423424998925167429}
   rayOffsetStrength: 1
-  densityOffset: 0.002
+  densityOffset: 0.003
   smokeAbsorption: 60
   lightAbsorptionTowardSun: 1.21
   lightAbsorptionThroughCloud: 0.75
@@ -234,6 +234,7 @@ MonoBehaviour:
   baseBrightness: 0.9
   phaseFactor: 0.488
   fireIntensity: 1
+  isDebugScattering: 0
 --- !u!1 &1206029856
 GameObject:
   m_ObjectHideFlags: 0
@@ -415,13 +416,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1803533584}
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: 0.43973577, y: -0.71936834, z: 0.3090969, w: -0.4400009}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 9.772, y: -156.308, z: -133.317}
 --- !u!1001 &3423424998925167424
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -455,7 +456,12 @@ PrefabInstance:
     - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: gridSpacingH
-      value: 0.6
+      value: 0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: MaxNumOfParticles
+      value: 100000
       objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
@@ -540,7 +546,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 7cc633ec1ab6d1b43889eb4d44ae5506, type: 2}
   startParticleSize: 0.05
   endParticleSize: 0.09
-  upresExtendSize: 0.2
+  upresExtendSize: 0.18
   tex: {fileID: 2800000, guid: 995fa875c367b3b4b851a6db3a61af07, type: 3}
   startColor: {r: 0.4528302, g: 0.25459492, b: 0.061943766, a: 1}
   endColor: {r: 0.7924528, g: 0.4931068, b: 0.2018512, a: 1}

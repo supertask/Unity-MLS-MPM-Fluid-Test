@@ -84,14 +84,19 @@
 	// --------------------------------------------------------------------
 	fixed4 frag(g2f i) : SV_Target
 	{
-		return tex2D(_MainTex, i.uv.xy) * i.color;
+		float4 col = tex2D(_MainTex, i.uv.xy) * i.color;
+		return col;
 		//return i.color;
 	}
 	ENDCG
 
 	SubShader
 	{
-		Tags{ "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
+		Tags{
+			"Queue" = "Transparent"
+			"RenderType" = "Transparent"
+			"IgnoreProjector" = "True"
+		}
 		LOD 100
 
 		ZWrite Off

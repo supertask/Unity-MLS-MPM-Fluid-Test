@@ -5,7 +5,6 @@ using ImageEffectUtil;
 
 namespace MlsMpm.Sand
 {
-	//[ExecuteInEditMode, ImageEffectAllowedInSceneView]
 	[ImageEffectAllowedInSceneView]
     public class ScatteringImageEffect : ImageEffectBase
     {
@@ -35,14 +34,19 @@ namespace MlsMpm.Sand
 
 		public float fireIntensity = 1.0f;
 
+		[Header (HEADER_DECORATION + "Debug" + HEADER_DECORATION)]
+		public bool isDebugScattering;
 
         protected override void Start() {
             base.Start();
         }
 
-		//[ImageEffectOpaque]
         protected override void OnRenderImage(RenderTexture src, RenderTexture dst)
         {
+			// Validate inputs
+			if (this.imageEffectMat == null || imageEffectMat.shader != shader) {
+				imageEffectMat = new Material (this.shader);
+			}
             Bounds bounds  = this.mpmPS.GetGridBounds();
 
 			this.imageEffectMat.SetFloat ("_FireIntensity", fireIntensity);
@@ -65,6 +69,12 @@ namespace MlsMpm.Sand
 			this.imageEffectMat.SetBuffer("_GridBuffer", this.mpmPS.LockGridBuffer);
 			this.imageEffectMat.SetVector("_GridDimension", this.mpmPS.GetGridDimension());
 			//Debug.Log("grid dimension: " + this.mpmPS.GetGridDimension() );
+
+			if (this.isDebugScattering) {
+				this.imageEffectMat.EnableKeyword("DEBUG_SCATTERING");
+			} else {
+				this.imageEffectMat.DisableKeyword("DEBUG_SCATTERING");
+			}
 
 
             Graphics.Blit(src, dst, this.imageEffectMat);

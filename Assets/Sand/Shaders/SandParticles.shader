@@ -44,6 +44,7 @@
 	float     _EndParticleSize;
 	float     _UpresExtendSize;
 	float4x4  _InvViewMatrix;
+	int  _IsSceneView;
 	static const float3 neighbourPositions[4] =
 	{
 		float3(-1, 1, 0),

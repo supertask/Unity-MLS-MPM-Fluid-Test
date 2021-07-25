@@ -25,6 +25,7 @@ namespace MlsMpm.Sand
             public static int StartColor = Shader.PropertyToID("_StartColor");
             public static int EndColor = Shader.PropertyToID("_EndColor");
             public static int UpresExtendSize = Shader.PropertyToID("_UpresExtendSize");
+            public static int IsSceneView = Shader.PropertyToID("_IsSceneView");
         }
 
         void Start()
@@ -38,16 +39,20 @@ namespace MlsMpm.Sand
             if (this.material == null) { return; }
 
             Matrix4x4 inverseViewMatrix;
+            int isSceneView = 0;
             if (SceneView.lastActiveSceneView.hasFocus)
             {
                 // If scene view is active, get foward direction of scene view
                 inverseViewMatrix = SceneView.lastActiveSceneView.camera.worldToCameraMatrix.inverse;
+                isSceneView = 1;
             }
             else
             {
                 // If game view is active, get foward direction of game view
                 inverseViewMatrix = Camera.main.worldToCameraMatrix.inverse;
+                isSceneView = 0;
             }
+            this.material.SetInt(ShaderID.IsSceneView, isSceneView);
             this.material.SetMatrix(ShaderID.InvViewMatrix, inverseViewMatrix);
             this.material.SetFloat(ShaderID.StartParticleSize, this.startParticleSize);
             this.material.SetFloat(ShaderID.EndParticleSize, this.endParticleSize);

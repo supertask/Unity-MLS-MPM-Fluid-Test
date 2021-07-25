@@ -21,6 +21,7 @@ struct V2FObjectSpace
     float3 positionWS : TEXCOORD0;
     float3 screenPos : TEXCOORD1;
     float3 viewVector : TEXCOORD2;
+    float2 uv : TEXCOORD3;
 };
 //
 // Fire & smoke settings
@@ -45,6 +46,7 @@ float _FireIntensity;
     uniform sampler2D _CameraOpaqueTexture;
 #elif defined(UNIT_RP__BUILT_IN_RP)
     uniform sampler2D _MainTex;
+    //uniform sampler2D _GrabPassTexture;
 #elif defined(UNIT_RP__HDRP)
     //Nothing
 #endif 
@@ -69,20 +71,22 @@ float4 volumetricRayMarching(
     float3 mainCameraPos,
     float3 mainLightPosition,
     float3 mainLightColor) {
+
     //return float4(screenUV, 0, 1);
 
-    //float viewLength = length(viewVector);
     //float nonlin_depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV);
     //float depth = LinearEyeDepth(nonlin_depth)/150.0;
     //return depth;
 
     Ray ray;
     ray.origin = mainCameraPos;
-    //ray.dir = normalize(positionWS - mainCameraPos);
     ray.dir = normalize(viewVector);
-    //return float4(mainCameraPos, 1);
     //return float4(positionWS, 1);
     //return float4(ray.dir, 1);
+    //return float4(normalize(viewVector), 1);
+    //return distance(ray.dir, normalize(viewVector)) ;
+
+    //return float4(mainCameraPos, 1);
 
     //TODO(Tasuku): 効率悪いので後で修正
     BoundingBox boundingBox;
@@ -175,13 +179,19 @@ float4 volumetricRayMarching(
     // Load scene color
     #if defined(UNIT_RP__BUILT_IN_RP)
         float4 sceneColor = tex2D(_MainTex, screenUV);
+        //float4 sceneColor = tex2D(_GrabPassTexture, screenUV);
     #elif defined(UNIT_RP__URP)
         float4 sceneColor = tex2D(_CameraOpaqueTexture, screenUV);
     #endif
 
-    //return lerp(sunLightEneryOnSmoke, sceneColor, smokeTransmittance);
+#if DEBUG_SCATTERING
+    float4 debugColor = sunLightEneryOnSmoke;
+    debugColor.a = 1.0 - smokeTransmittance;
+    return debugColor;
+#else
     float4 sandColor = float4(sunLightEneryOnSmoke * sceneColor.rgb, 1.0 - smokeTransmittance);
     return BlendAlpha(sceneColor, sandColor);
+#endif
 
     //return lerp(smokeCol, sceneColor, smokeTransmittance);
 
