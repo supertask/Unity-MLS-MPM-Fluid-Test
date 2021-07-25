@@ -3,18 +3,10 @@
 #include "Assets/MLS-MPM-Core/Shaders/Grid.hlsl"
 #include "Assets/Common/Shaders/PhotoShopMath.hlsl"
 
-//バグ(2021/07/26): scatteringの計算結果が0.002 ~ 0.02になっている
-//本来なら0.0 ~ 1.0
 #define BUFFER_T LockMpmCell
 #define PHYSICAL_QUANTITY(element) ConvertInt2ToFloat(int2(element.mass, element.mass2))
-//#define PHYSICAL_QUANTITY(element) (element.mass)
 StructuredBuffer<BUFFER_T> _GridBuffer;
 
-//float PHYSICAL_QUANTITY(LockMpmCell bufferStruct)
-//{
-//    float val = ConvertInt2ToFloat(int2(bufferStruct.mass, bufferStruct.mass2));
-//    return val;
-//}
 
 #define RAY_STEPS_TO_FLUID 64
 #define RAY_STEPS_TO_LIGHT 6
