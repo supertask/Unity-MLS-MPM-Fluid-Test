@@ -463,6 +463,11 @@ PrefabInstance:
       propertyPath: MaxNumOfParticles
       value: 100000
       objectReference: {fileID: 0}
+    - target: {fileID: 1217799961580971129, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
+        type: 3}
+      propertyPath: implementationType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3423425001010626360, guid: f0c6d54cc3694a24a8ec52cb84c55fda,
         type: 3}
       propertyPath: m_Name

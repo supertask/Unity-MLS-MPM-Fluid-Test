@@ -302,14 +302,33 @@ void GatherAndWrite(uint3 DTid : SV_DispatchThreadID, uint GI : SV_GroupIndex)
 		//cell.mass_x_velocity = (int) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT_1);
 		//_LockGridBuffer[cellId] = cell; //AtomicAdd is applied
 
-		int intMass = (int) (blockP2gMass[GI].mass * FLOAT_TO_INT_DIGIT_1);
-		//int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT_1);
-		int intMassXVelocityX = (int) (blockP2gMass[GI].mass_x_velocity.x * FLOAT_TO_INT_DIGIT_1);
-		int intMassXVelocityY = (int) (blockP2gMass[GI].mass_x_velocity.y * FLOAT_TO_INT_DIGIT_1);
-		int intMassXVelocityZ = (int) (blockP2gMass[GI].mass_x_velocity.z * FLOAT_TO_INT_DIGIT_1);
-		InterlockedAdd(_LockGridBuffer[cellId].mass, intMass);
-		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.x, intMassXVelocityX);
-		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.y, intMassXVelocityY);
-		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.z, intMassXVelocityZ);
+		float mass = blockP2gMass[GI].mass;
+		float3 mass_x_velocity = blockP2gMass[GI].mass_x_velocity;
+
+		//int intMass = (int) (mass * FLOAT_TO_INT_DIGIT_1);
+		////int3 intMassXVelocity = (int3) (blockP2gMass[GI].mass_x_velocity * FLOAT_TO_INT_DIGIT_1);
+		//int intMassXVelocityX = (int) (mass_x_velocity.x * FLOAT_TO_INT_DIGIT_1);
+		//int intMassXVelocityY = (int) (mass_x_velocity.y * FLOAT_TO_INT_DIGIT_1);
+		//int intMassXVelocityZ = (int) (mass_x_velocity.z * FLOAT_TO_INT_DIGIT_1);
+
+		int2 splitMass = ConvertFloatToInt2(mass);
+		int2 splitMassXVelocityX = ConvertFloatToInt2(mass_x_velocity.x);
+		int2 splitMassXVelocityY = ConvertFloatToInt2(mass_x_velocity.y);
+		int2 splitMassXVelocityZ = ConvertFloatToInt2(mass_x_velocity.z);
+
+
+		//InterlockedAdd(_LockGridBuffer[cellId].mass, intMass);
+		InterlockedAdd(_LockGridBuffer[cellId].mass, splitMass.x);
+		InterlockedAdd(_LockGridBuffer[cellId].mass2, splitMass.y);
+
+		//InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.x, intMassXVelocityX);
+		//InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.y, intMassXVelocityY);
+		//InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.z, intMassXVelocityZ);
+		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.x, splitMassXVelocityX.x );
+		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity2.x, splitMassXVelocityX.y );
+		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.y, splitMassXVelocityY.x );
+		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity2.y, splitMassXVelocityY.y );
+		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity.z, splitMassXVelocityZ.x );
+		InterlockedAdd(_LockGridBuffer[cellId].mass_x_velocity2.z, splitMassXVelocityZ.y );
 	}
 }
